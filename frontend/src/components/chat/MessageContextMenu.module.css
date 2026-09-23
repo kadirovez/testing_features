@@ -1,0 +1,24 @@
+.menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 200px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--elev-2);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.96);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    visibility 0s linear var(--dur-fast);
+}
+
+.open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}

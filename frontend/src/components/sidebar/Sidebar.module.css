@@ -1,0 +1,41 @@
+.root {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur) var(--ease),
+    visibility 0s linear var(--dur);
+}
+
+.base {
+  transition-delay: 0s;
+}
+
+.covered {
+  transform: translateX(-12%);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.view {
+  transform: translateX(24px);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.active {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}

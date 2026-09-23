@@ -1,0 +1,28 @@
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
+  overscroll-behavior: contain;
+}
+
+.placeholder {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+.spinner {
+  color: var(--text-3);
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

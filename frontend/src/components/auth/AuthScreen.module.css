@@ -1,0 +1,119 @@
+.screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--bg-app);
+  overflow-y: auto;
+}
+
+.card {
+  width: min(380px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.logo {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0 0 var(--space-4);
+  text-align: center;
+  color: var(--text-2);
+}
+
+.field {
+  position: relative;
+  display: block;
+}
+
+.label {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  left: var(--space-3);
+  padding: 0 var(--space-1);
+  background: var(--bg-app);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.field:focus-within .label {
+  color: var(--accent);
+}
+
+.input {
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 1.5px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: none;
+  outline: 0;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+[data-theme="dark"] .input {
+  border-color: rgb(255 255 255 / 0.12);
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.submit {
+  height: 52px;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .submit:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+}
+
+.switch {
+  height: var(--touch);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
