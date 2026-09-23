@@ -1,0 +1,77 @@
+.footer {
+  padding: var(--space-4) var(--space-4) var(--space-6);
+}
+
+.remove {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .remove:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+}
+
+.remove:disabled {
+  opacity: 0.6;
+}
+
+.confirmBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.confirmText {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--danger);
+}
+
+.confirmActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.confirmCancel,
+.confirmOk {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+.confirmCancel {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.confirmOk {
+  background: var(--danger);
+  color: #fff;
+}
+
+@media (hover: hover) {
+  .confirmCancel:hover {
+    background: var(--divider);
+  }
+
+  .confirmOk:hover {
+    filter: brightness(1.06);
+  }
+}

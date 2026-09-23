@@ -30,11 +30,53 @@
   transform-origin: top right;
 }
 
+.center {
+  left: 50%;
+  transform: translateX(-50%) scale(0.96) translateY(-4px);
+  transform-origin: top center;
+}
+
+.top {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+  transform: scale(0.96) translateY(4px);
+}
+
+.top.start {
+  transform-origin: bottom left;
+}
+
+.top.end {
+  transform-origin: bottom right;
+}
+
+.top.center {
+  transform: translateX(-50%) scale(0.96) translateY(4px);
+  transform-origin: bottom center;
+}
+
 .open {
   opacity: 1;
   visibility: visible;
-  transform: none;
   transition-delay: 0s;
+}
+
+.open.start,
+.open.end {
+  transform: none;
+}
+
+.open.center {
+  transform: translateX(-50%);
+}
+
+.open.top.start,
+.open.top.end {
+  transform: none;
+}
+
+.open.top.center {
+  transform: translateX(-50%);
 }
 
 .item {

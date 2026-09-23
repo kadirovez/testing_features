@@ -1,4 +1,4 @@
-import type { DeliveryStatus, MessageRead, UUID } from "../api/types";
+import type { DeliveryStatus, MediaBrief, MessageRead, UUID } from "../api/types";
 
 export interface ChatTimeline {
   ids: UUID[];
@@ -16,7 +16,8 @@ export type MessagesAction =
   | { type: "messages/pageLoaded"; chatId: UUID; messages: MessageRead[]; nextCursor: string | null }
   | { type: "messages/upserted"; message: MessageRead }
   | { type: "messages/removed"; chatId: UUID; messageId: UUID }
-  | { type: "messages/status"; messageIds: UUID[]; status: DeliveryStatus };
+  | { type: "messages/status"; messageIds: UUID[]; status: DeliveryStatus }
+  | { type: "messages/mediaPatched"; media: MediaBrief };
 
 export const initialMessagesState: MessagesState = { byId: {}, byChat: {}, status: {} };
 
@@ -26,13 +27,23 @@ function sortIds(ids: Iterable<UUID>, byId: Record<UUID, MessageRead>): UUID[] {
   return [...new Set(ids)].sort((a, b) => byId[a].created_at.localeCompare(byId[b].created_at));
 }
 
+function timelineIds(ids: Iterable<UUID>, byId: Record<UUID, MessageRead>): UUID[] {
+  return sortIds(
+    [...ids].filter((id) => {
+      const message = byId[id];
+      return message !== undefined && !message.is_deleted;
+    }),
+    byId,
+  );
+}
+
 export function messagesReducer(state: MessagesState, action: MessagesAction): MessagesState {
   switch (action.type) {
     case "messages/pageLoaded": {
       const byId = { ...state.byId };
       action.messages.forEach((m) => (byId[m.id] = m));
       const prev = state.byChat[action.chatId];
-      const ids = sortIds([...action.messages.map((m) => m.id), ...(prev?.ids ?? [])], byId);
+      const ids = timelineIds([...action.messages.map((m) => m.id), ...(prev?.ids ?? [])], byId);
       return {
         ...state,
         byId,
@@ -44,14 +55,18 @@ export function messagesReducer(state: MessagesState, action: MessagesAction): M
       const byId = { ...state.byId, [message.id]: message };
       const timeline = state.byChat[message.chat_id];
       if (!timeline) return { ...state, byId };
-      const ids = sortIds([...timeline.ids, message.id], byId);
+      const ids = message.is_deleted
+        ? timeline.ids.filter((id) => id !== message.id)
+        : timelineIds([...timeline.ids, message.id], byId);
       return { ...state, byId, byChat: { ...state.byChat, [message.chat_id]: { ...timeline, ids } } };
     }
     case "messages/removed": {
       const timeline = state.byChat[action.chatId];
-      if (!timeline) return state;
+      const byId = { ...state.byId };
+      delete byId[action.messageId];
+      if (!timeline) return { ...state, byId };
       const ids = timeline.ids.filter((id) => id !== action.messageId);
-      return { ...state, byChat: { ...state.byChat, [action.chatId]: { ...timeline, ids } } };
+      return { ...state, byId, byChat: { ...state.byChat, [action.chatId]: { ...timeline, ids } } };
     }
     case "messages/status": {
       const status = { ...state.status };
@@ -60,6 +75,19 @@ export function messagesReducer(state: MessagesState, action: MessagesAction): M
         if (STATUS_RANK[action.status] > STATUS_RANK[current]) status[id] = action.status;
       });
       return { ...state, status };
+    }
+    case "messages/mediaPatched": {
+      const byId = { ...state.byId };
+      let changed = false;
+      for (const message of Object.values(byId)) {
+        const index = message.attachments.findIndex((item) => item.id === action.media.id);
+        if (index === -1) continue;
+        const attachments = [...message.attachments];
+        attachments[index] = action.media;
+        byId[message.id] = { ...message, attachments };
+        changed = true;
+      }
+      return changed ? { ...state, byId } : state;
     }
     default:
       return state;

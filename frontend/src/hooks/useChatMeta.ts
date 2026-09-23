@@ -37,7 +37,7 @@ export function useChatMeta(chatId: UUID | null): ChatMeta | null {
 
   return {
     chat,
-    title: chat.title ?? peer?.display_name ?? "",
+    title: chat.title ?? peer?.username ?? "",
     avatarMediaId: chat.avatar_media_id ?? peer?.avatar_media_id ?? null,
     avatarSeed: peer?.id ?? chat.id,
     peer,

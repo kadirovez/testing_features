@@ -1,4 +1,5 @@
 import type { MessageRead, UUID } from "../../api/types";
+import type { MouseEvent } from "react";
 import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { useChatMeta } from "../../hooks/useChatMeta";
@@ -13,6 +14,7 @@ interface ChatListItemProps {
   chatId: UUID;
   active: boolean;
   onSelect: () => void;
+  onContextMenu: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 function previewText(message: MessageRead | undefined, t: (key: TranslationKey) => string): string {
@@ -23,7 +25,7 @@ function previewText(message: MessageRead | undefined, t: (key: TranslationKey) 
   return message.type === "video" ? t("chats.video") : t("chats.photo");
 }
 
-export function ChatListItem({ chatId, active, onSelect }: ChatListItemProps) {
+export function ChatListItem({ chatId, active, onSelect, onContextMenu }: ChatListItemProps) {
   const { state } = useStore();
   const { t, locale } = useLocale();
   const meta = useChatMeta(chatId);
@@ -37,11 +39,17 @@ export function ChatListItem({ chatId, active, onSelect }: ChatListItemProps) {
     chat.type === "group" && last?.sender_id && last.type !== "system"
       ? isOwn
         ? t("chats.you")
-        : state.users.byId[last.sender_id]?.display_name.split(" ")[0]
+        : state.users.byId[last.sender_id]?.username
       : null;
 
   return (
-    <button type="button" role="listitem" className={cx(styles.item, active && styles.active)} onClick={onSelect}>
+    <button
+      type="button"
+      role="listitem"
+      className={cx(styles.item, active && styles.active)}
+      onClick={onSelect}
+      onContextMenu={onContextMenu}
+    >
       <Avatar name={meta.title} seed={meta.avatarSeed} mediaId={meta.avatarMediaId} size="lg" online={meta.online} />
       <span className={styles.body}>
         <span className={styles.row}>

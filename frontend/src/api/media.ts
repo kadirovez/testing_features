@@ -10,20 +10,33 @@ async function uploadToStorage(upload: UploadRead, file: File): Promise<void> {
   if (!response.ok) throw new Error(`storage upload failed: ${response.status}`);
 }
 
+function kindForFile(file: File): MediaKind {
+  return file.type.startsWith("video/") ? "video" : "photo";
+}
+
 export const mediaApi = {
   url: (mediaId: UUID, variant: MediaVariant = "original") =>
     http.get<DownloadUrlRead>(`/media/${mediaId}/url`, { variant }),
 
-  /** Presigned upload flow: reserve -> upload to object storage -> confirm. */
-  async upload(file: File, purpose: MediaPurpose): Promise<MediaRead> {
-    const kind: MediaKind = file.type.startsWith("video/") ? "video" : "photo";
-    const upload = await http.post<UploadRead>("/media/uploads", {
-      kind,
+  get: (mediaId: UUID) => http.get<MediaRead>(`/media/${mediaId}`),
+
+  async reserve(file: File, purpose: MediaPurpose): Promise<UploadRead> {
+    return http.post<UploadRead>("/media/uploads", {
+      kind: kindForFile(file),
       purpose,
-      mime_type: file.type,
+      mime_type: file.type || "application/octet-stream",
       size_bytes: file.size,
     });
-    if (!config.useMocks) await uploadToStorage(upload, file);
-    return http.post<MediaRead>(`/media/${upload.media.id}/complete`);
+  },
+
+  uploadToStorage,
+
+  complete: (mediaId: UUID) => http.post<MediaRead>(`/media/${mediaId}/complete`),
+
+  /** Presigned upload flow: reserve -> upload to object storage -> confirm. */
+  async upload(file: File, purpose: MediaPurpose): Promise<MediaRead> {
+    const reserved = await mediaApi.reserve(file, purpose);
+    if (!config.useMocks) await uploadToStorage(reserved, file);
+    return mediaApi.complete(reserved.media.id);
   },
 };

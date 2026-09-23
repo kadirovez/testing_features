@@ -84,3 +84,8 @@ async def remove_member(chat_id: UUID, user_id: UUID, db: DbDep, current: Curren
 @router.post("/{chat_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_chat(chat_id: UUID, db: DbDep, current: CurrentDep) -> None:
     await chats_service.leave_chat(db, current.user_id, chat_id)
+
+
+@router.post("/{chat_id}/dismiss", status_code=status.HTTP_204_NO_CONTENT)
+async def dismiss_chat(chat_id: UUID, db: DbDep, current: CurrentDep) -> None:
+    await chats_service.dismiss_chat(db, current.user_id, chat_id)

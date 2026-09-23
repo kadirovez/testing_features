@@ -36,7 +36,7 @@ export function MessageGroup({ group, showSender, onMenu }: MessageGroupProps) {
       {withAvatar && (
         <div className={styles.avatarSlot}>
           <Avatar
-            name={sender?.display_name ?? "?"}
+            name={sender?.username ?? "?"}
             seed={group.senderId ?? group.key}
             mediaId={sender?.avatar_media_id}
             size="sm"
@@ -52,7 +52,7 @@ export function MessageGroup({ group, showSender, onMenu }: MessageGroupProps) {
             isOwn={isOwn}
             isFirst={index === 0}
             isLast={index === group.messages.length - 1}
-            senderName={withAvatar && index === 0 ? sender?.display_name : undefined}
+            senderName={withAvatar && index === 0 ? sender?.username : undefined}
             senderSeed={group.senderId ?? undefined}
             onMenu={onMenu}
           />

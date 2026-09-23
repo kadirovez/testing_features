@@ -25,7 +25,6 @@ from app.seed.errors.chats import (
     CANNOT_ADD_TO_DIRECT_CHAT,
     CANNOT_CHANGE_OWN_ROLE,
     CANNOT_CREATE_DIRECT_WITH_SELF,
-    CANNOT_LEAVE_DIRECT_CHAT,
     CANNOT_MODIFY_DIRECT_CHAT,
     CANNOT_REMOVE_OWNER,
     CHAT_NOT_FOUND,
@@ -115,6 +114,12 @@ async def create_direct_chat(db: AsyncSession, actor_id: UUID, data: DirectChatC
     existing = await chat_repo.get_by_direct_key(db, direct_key)
     if existing is not None:
         member = await chat_repo.get_member_any_state(db, existing.id, actor_id)
+        if member is not None and member.left_at is not None:
+            await chat_repo.update_member(
+                db, member.id, {"left_at": None, "joined_at": datetime.now(UTC)}
+            )
+            await db.commit()
+        member = await chat_repo.get_member(db, existing.id, actor_id)
         return await _build_chat_read(db, actor_id, existing, member)
 
     chat = await chat_repo.create_chat(db, type=ChatType.DIRECT, created_by=actor_id, direct_key=direct_key)
@@ -371,17 +376,23 @@ async def change_member_role(db: AsyncSession, actor_id: UUID, chat_id: UUID, us
     return ChatMemberRead(user=target_user, role=target.role, joined_at=target.joined_at)
 
 
-async def leave_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
-    """Leave a group chat; the last remaining owner leaving deletes the chat."""
-    chat = await _get_chat_or_raise(db, chat_id)
-    # direct chats cannot be left
-    if chat.type == ChatType.DIRECT:
-        raise AppError(CANNOT_LEAVE_DIRECT_CHAT)
+async def dismiss_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
+    """Remove a chat from the actor's sidebar without deleting history for others."""
+    await leave_chat(db, actor_id, chat_id)
 
+
+async def leave_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
+    """Leave a chat: hide a direct chat for the actor or leave a group."""
+    chat = await _get_chat_or_raise(db, chat_id)
     member = await chat_repo.get_member(db, chat_id, actor_id)
     # actor is not a member of the chat
     if member is None:
         raise AppError(NOT_CHAT_MEMBER)
+
+    if chat.type == ChatType.DIRECT:
+        await chat_repo.update_member(db, member.id, {"left_at": datetime.now(UTC)})
+        await db.commit()
+        return
 
     member_count = await chat_repo.count_active_members(db, chat_id)
     # the owner must hand over ownership while other members remain

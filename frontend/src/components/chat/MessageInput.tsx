@@ -1,11 +1,12 @@
-import { SendHorizontal } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { FileUp, ImageIcon, Plus, SendHorizontal } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { ApiError } from "../../api/client";
 import type { UUID } from "../../api/types";
 import { useLocale } from "../../context/LocaleContext";
 import { useChatActions } from "../../hooks/useChatActions";
 import { useTypingNotifier } from "../../hooks/useTypingNotifier";
 import { cx } from "../../utils/cx";
+import { Dropdown, DropdownItem } from "../shared/Dropdown";
 import styles from "./MessageInput.module.css";
 
 const MAX_HEIGHT_PX = 180;
@@ -19,13 +20,18 @@ export function MessageInput({ chatId }: MessageInputProps) {
   const actions = useChatActions();
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const notifyTyping = useTypingNotifier(chatId);
+
+  const closeAttach = useCallback(() => setAttachOpen(false), []);
 
   useEffect(() => {
     setText("");
     setError(null);
+    setAttachOpen(false);
   }, [chatId]);
 
   useEffect(() => {
@@ -55,6 +61,25 @@ export function MessageInput({ chatId }: MessageInputProps) {
     }
   };
 
+  const onGallery = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = [...(event.target.files ?? [])].filter((file) => file.type.startsWith("image/"));
+    event.target.value = "";
+    closeAttach();
+    if (files.length === 0) return;
+    setSending(true);
+    setError(null);
+    void actions
+      .sendImages(chatId, files)
+      .catch((err: unknown) => {
+        if (!(err instanceof ApiError)) throw err;
+        setError(err.message);
+      })
+      .finally(() => {
+        setSending(false);
+        ref.current?.focus();
+      });
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -79,6 +104,35 @@ export function MessageInput({ chatId }: MessageInputProps) {
             }}
             onKeyDown={onKeyDown}
           />
+          <Dropdown
+            open={attachOpen}
+            onClose={closeAttach}
+            align="end"
+            placement="top"
+            trigger={
+              <button
+                type="button"
+                className={cx(styles.attach, attachOpen && styles.attachActive)}
+                aria-label={t("chat.attachMenu")}
+                aria-haspopup="menu"
+                aria-expanded={attachOpen}
+                disabled={sending}
+                onClick={() => setAttachOpen((open) => !open)}
+              >
+                <Plus size={22} strokeWidth={1.75} />
+              </button>
+            }
+          >
+            <DropdownItem
+              icon={<ImageIcon size={18} strokeWidth={1.75} />}
+              label={t("chat.attachGallery")}
+              onSelect={() => {
+                closeAttach();
+                galleryRef.current?.click();
+              }}
+            />
+            <DropdownItem icon={<FileUp size={18} strokeWidth={1.75} />} label={t("chat.attachFile")} onSelect={() => {}} />
+          </Dropdown>
         </div>
         <button
           type="button"
@@ -90,6 +144,7 @@ export function MessageInput({ chatId }: MessageInputProps) {
           <SendHorizontal size={20} strokeWidth={1.75} />
         </button>
       </div>
+      <input ref={galleryRef} type="file" accept="image/*" multiple hidden onChange={onGallery} />
     </div>
   );
 }

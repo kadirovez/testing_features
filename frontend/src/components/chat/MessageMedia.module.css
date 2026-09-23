@@ -22,7 +22,26 @@
 .item {
   position: relative;
   max-height: 360px;
+  min-height: 120px;
   background: var(--surface-2);
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .image {

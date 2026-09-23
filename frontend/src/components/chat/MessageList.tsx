@@ -26,7 +26,10 @@ export function MessageList({ chatId }: MessageListProps) {
 
   const timeline = state.messages.byChat[chatId];
   const messages = useMemo(
-    () => (timeline?.ids ?? []).map((id) => state.messages.byId[id]),
+    () =>
+      (timeline?.ids ?? [])
+        .map((id) => state.messages.byId[id])
+        .filter((message): message is MessageRead => message !== undefined && !message.is_deleted),
     [timeline?.ids, state.messages.byId],
   );
   const sections = useMemo(() => groupMessages(messages), [messages]);

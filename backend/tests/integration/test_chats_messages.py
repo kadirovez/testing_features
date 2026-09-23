@@ -14,7 +14,12 @@ async def test_direct_chat_is_unique(alice: Account, bob: Account) -> None:
     assert first.json()["id"] == second.json()["id"]
     assert first.json()["peer"]["id"] == bob.user_id
     assert _code(await alice.post("/chats/direct", json={"user_id": alice.user_id})) == "cannot_create_direct_with_self"
-    assert _code(await alice.post(f"/chats/{first.json()['id']}/leave")) == "cannot_leave_direct_chat"
+    chat_id = first.json()["id"]
+    assert (await alice.post(f"/chats/{chat_id}/leave")).status_code == 204
+    assert all(item["id"] != chat_id for item in (await alice.get("/chats")).json()["items"])
+    reopened = await alice.post("/chats/direct", json={"user_id": bob.user_id})
+    assert reopened.status_code == 200
+    assert reopened.json()["id"] == chat_id
 
 
 async def test_group_roles_matrix(alice: Account, bob: Account, carol: Account) -> None:

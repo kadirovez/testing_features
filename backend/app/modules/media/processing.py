@@ -21,20 +21,38 @@ class ProcessedMedia:
     thumbnail_jpeg: bytes
 
 
-def _thumbnail_from_image(image: Image.Image) -> bytes:
+def _square_crop(image: Image.Image) -> Image.Image:
+    """Center-crop to a 1:1 aspect ratio."""
+    width, height = image.size
+    side = min(width, height)
+    left = (width - side) // 2
+    top = (height - side) // 2
+    return image.crop((left, top, left + side, top + side))
+
+
+def _thumbnail_from_image(image: Image.Image, square: bool = False) -> bytes:
     image = ImageOps.exif_transpose(image)
+    if square:
+        image = _square_crop(image)
     image.thumbnail((settings.MEDIA_THUMBNAIL_SIZE, settings.MEDIA_THUMBNAIL_SIZE))
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="JPEG", quality=80)
     return buffer.getvalue()
 
 
-def process_photo(path: str) -> ProcessedMedia:
+def process_photo(path: str, square_crop: bool = False) -> ProcessedMedia:
     """Read photo dimensions and render a JPEG thumbnail."""
     with Image.open(path) as image:
         oriented = ImageOps.exif_transpose(image)
+        if square_crop:
+            oriented = _square_crop(oriented)
         width, height = oriented.size
-        return ProcessedMedia(width=width, height=height, duration_ms=None, thumbnail_jpeg=_thumbnail_from_image(oriented))
+        return ProcessedMedia(
+            width=width,
+            height=height,
+            duration_ms=None,
+            thumbnail_jpeg=_thumbnail_from_image(oriented, square=False),
+        )
 
 
 def process_video(path: str) -> ProcessedMedia:

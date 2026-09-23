@@ -8,17 +8,22 @@ interface DropdownProps {
   onClose: () => void;
   trigger: ReactNode;
   children: ReactNode;
-  align?: "start" | "end";
+  align?: "start" | "end" | "center";
+  placement?: "bottom" | "top";
 }
 
-export function Dropdown({ open, onClose, trigger, children, align = "start" }: DropdownProps) {
+export function Dropdown({ open, onClose, trigger, children, align = "start", placement = "bottom" }: DropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, open, onClose);
 
   return (
     <div ref={ref} className={styles.root}>
       {trigger}
-      <div className={cx(styles.panel, styles[align], open && styles.open)} role="menu" aria-hidden={!open}>
+      <div
+        className={cx(styles.panel, styles[align], placement === "top" && styles.top, open && styles.open)}
+        role="menu"
+        aria-hidden={!open}
+      >
         {children}
       </div>
     </div>

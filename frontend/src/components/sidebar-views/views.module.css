@@ -4,6 +4,13 @@
   padding-bottom: var(--space-5);
 }
 
+.loading {
+  margin: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
 .hero {
   display: flex;
   flex-direction: column;

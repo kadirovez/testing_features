@@ -1,10 +1,16 @@
 .screen {
+  --auth-bg: #f3f4f6;
+
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: var(--bg-app);
+  background: var(--auth-bg);
   overflow-y: auto;
+}
+
+[data-theme="dark"] .screen {
+  --auth-bg: #1a1b1f;
 }
 
 .card {
@@ -51,7 +57,7 @@
   top: calc(-1 * var(--space-2));
   left: var(--space-3);
   padding: 0 var(--space-1);
-  background: var(--bg-app);
+  background: var(--auth-bg);
   font-size: var(--fs-xs);
   color: var(--text-2);
   transition: color var(--dur-fast) var(--ease);

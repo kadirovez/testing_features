@@ -10,4 +10,5 @@ export const chatsApi = {
     http.post<ChatRead>("/chats/group", { title, member_ids: memberIds }),
   members: (chatId: UUID) => http.get<ChatMemberRead[]>(`/chats/${chatId}/members`),
   leave: (chatId: UUID) => http.post<void>(`/chats/${chatId}/leave`),
+  dismiss: (chatId: UUID) => http.post<void>(`/chats/${chatId}/leave`),
 };

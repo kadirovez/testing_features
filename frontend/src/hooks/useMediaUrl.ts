@@ -35,7 +35,12 @@ async function resolveUrl(mediaId: UUID, variant: MediaVariant): Promise<string 
   return promise;
 }
 
-export function useMediaUrl(mediaId: UUID | null | undefined, variant: MediaVariant = "thumbnail"): string | null {
+export function useMediaUrl(
+  mediaId: UUID | null | undefined,
+  variant: MediaVariant = "thumbnail",
+  /** Bumps when attachment processing finishes so presigned URLs can be retried. */
+  statusToken?: string,
+): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,7 +55,7 @@ export function useMediaUrl(mediaId: UUID | null | undefined, variant: MediaVari
     return () => {
       cancelled = true;
     };
-  }, [mediaId, variant]);
+  }, [mediaId, variant, statusToken]);
 
   return url;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { chatsApi } from "../api/chats";
+import { mediaApi } from "../api/media";
 import { useLocale } from "../context/LocaleContext";
 import { useStore } from "../context/StoreContext";
 import { onEvent } from "../realtime/registry";
@@ -40,6 +41,9 @@ export function useRealtimeSync(actions: ChatActions): void {
         }
       }),
       onEvent("message_updated", ({ message }) => dispatch({ type: "messages/upserted", message })),
+      onEvent("media_ready", ({ media_id }) => {
+        void mediaApi.get(media_id).then((media) => dispatch({ type: "messages/mediaPatched", media }));
+      }),
       onEvent("message_deleted", ({ chat_id, message_id }) =>
         dispatch({ type: "messages/removed", chatId: chat_id, messageId: message_id }),
       ),

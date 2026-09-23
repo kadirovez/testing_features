@@ -17,8 +17,8 @@ export function ProfileView() {
       <ViewHeader title={t("profile.title")} />
       <div className={styles.scroll}>
         <div className={styles.hero}>
-          <Avatar name={me.display_name} seed={me.id} mediaId={me.avatar_media_id} size="xl" />
-          <h3 className={styles.heroName}>{me.display_name}</h3>
+          <Avatar name={me.username} seed={me.id} mediaId={me.avatar_media_id} size="xl" />
+          <h3 className={styles.heroName}>{me.username}</h3>
           <span className={styles.heroSub}>{t("chat.online")}</span>
         </div>
         <div className={styles.section}>

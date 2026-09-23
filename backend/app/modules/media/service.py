@@ -37,6 +37,7 @@ from app.seed.errors.media import (
 logger = logging.getLogger(__name__)
 
 _USABLE_STATUSES = (MediaStatus.UPLOADED, MediaStatus.PROCESSING, MediaStatus.READY)
+_MESSAGE_ATTACHABLE_STATUSES = (MediaStatus.PENDING, *_USABLE_STATUSES)
 _PUBLIC_PURPOSES = (MediaPurpose.AVATAR, MediaPurpose.CHAT_AVATAR)
 _STALE_CLEANUP_BATCH = 500
 
@@ -158,7 +159,9 @@ async def get_download_url(db: AsyncSession, user_id: UUID, media_id: UUID, vari
 
 async def get_attachable_media(db: AsyncSession, media_ids: Sequence[UUID], owner_id: UUID) -> list[MediaBrief]:
     """Return the owner's uploaded message media among the given ids."""
-    media = await media_repo.list_owned_with_purpose(db, media_ids, owner_id, MediaPurpose.MESSAGE, _USABLE_STATUSES)
+    media = await media_repo.list_owned_with_purpose(
+        db, media_ids, owner_id, MediaPurpose.MESSAGE, _MESSAGE_ATTACHABLE_STATUSES
+    )
     return [MediaBrief.model_validate(item) for item in media]
 
 
@@ -186,8 +189,10 @@ async def _process_file(media: MediaFile) -> ProcessedMedia:
     os.close(fd)
     try:
         await storage.download_file(media.storage_key, path)
-        processor = process_photo if media.kind == MediaKind.PHOTO else process_video
-        return await asyncio.to_thread(processor, path)
+        if media.kind == MediaKind.PHOTO:
+            square = media.purpose == MediaPurpose.AVATAR
+            return await asyncio.to_thread(process_photo, path, square)
+        return await asyncio.to_thread(process_video, path)
     finally:
         os.unlink(path)
 

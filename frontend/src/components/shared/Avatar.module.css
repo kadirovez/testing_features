@@ -1,3 +1,11 @@
+.hitTarget {
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: zoom-in;
+}
+
 .avatar {
   position: relative;
   flex-shrink: 0;

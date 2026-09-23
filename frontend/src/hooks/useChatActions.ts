@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef } from "react";
+import { config } from "../config";
 import { chatsApi } from "../api/chats";
+import { mediaApi } from "../api/media";
 import { messagesApi } from "../api/messages";
 import type { ChatRead, MessageRead, UUID } from "../api/types";
 import { usersApi } from "../api/users";
@@ -133,6 +135,40 @@ export function useChatActions() {
     [dispatch],
   );
 
+  const sendImages = useCallback(
+    async (chatId: UUID, files: File[]) => {
+      if (files.length === 0) return;
+      const clientMessageId = crypto.randomUUID();
+      const reserved = await Promise.all(files.map((file) => mediaApi.reserve(file, "message")));
+      const mediaIds = reserved.map((item) => item.media.id);
+      const message = await messagesApi.send(chatId, { media_ids: mediaIds, client_message_id: clientMessageId });
+      dispatch({ type: "messages/upserted", message });
+      dispatch({ type: "chats/messageArrived", message, incrementUnread: false });
+
+      void Promise.all(
+        reserved.map(async (upload, index) => {
+          if (!config.useMocks) await mediaApi.uploadToStorage(upload, files[index]);
+          const media = await mediaApi.complete(upload.media.id);
+          dispatch({ type: "messages/mediaPatched", media });
+        }),
+      ).catch(() => {
+        /* upload errors surface on next refresh; failed media stays in processing/pending state */
+      });
+    },
+    [dispatch],
+  );
+
+  const dismissChat = useCallback(
+    async (chatId: UUID) => {
+      await chatsApi.dismiss(chatId);
+      dispatch({ type: "chats/removed", chatId });
+      if (stateRef.current.ui.activeChatId === chatId) {
+        dispatch({ type: "ui/closeChat" });
+      }
+    },
+    [dispatch],
+  );
+
   const deleteMessage = useCallback(
     async (message: MessageRead) => {
       await messagesApi.remove(message.id);
@@ -149,8 +185,19 @@ export function useChatActions() {
   );
 
   return useMemo(
-    () => ({ loadChats, ensureChat, openChat, openDirectWith, loadHistory, sendMessage, deleteMessage, markRead }),
-    [loadChats, ensureChat, openChat, openDirectWith, loadHistory, sendMessage, deleteMessage, markRead],
+    () => ({
+      loadChats,
+      ensureChat,
+      openChat,
+      openDirectWith,
+      loadHistory,
+      sendMessage,
+      sendImages,
+      deleteMessage,
+      dismissChat,
+      markRead,
+    }),
+    [loadChats, ensureChat, openChat, openDirectWith, loadHistory, sendMessage, sendImages, deleteMessage, dismissChat, markRead],
   );
 }
 
