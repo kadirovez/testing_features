@@ -1,29 +1,29 @@
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg-app: #f4f3ef;
+  --bg-app: #e8e8eb;
   --surface: #ffffff;
-  --surface-2: #f0efea;
-  --chat-bg: #dce3d8;
-  --divider: #e6e4de;
-  --overlay: rgb(20 24 22 / 0.32);
+  --surface-2: #f2f2f4;
+  --chat-bg: #d8dce2;
+  --divider: #d4d4d8;
+  --overlay: rgb(24 24 28 / 0.32);
 
-  --text: #1b1d1c;
-  --text-2: #6b706c;
-  --text-3: #9ca19d;
+  --text: #1a1a1e;
+  --text-2: #65656d;
+  --text-3: #94949c;
 
-  --accent: #2f7d6d;
-  --accent-hover: #276a5c;
-  --accent-soft: #ddeee9;
+  --accent: #1e40af;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #cfdcf5;
   --on-accent: #ffffff;
 
-  --bubble-out: #d6efe3;
-  --bubble-out-text: #16322b;
+  --bubble-out: #dce8fc;
+  --bubble-out-text: #1e3a5f;
   --bubble-in: #ffffff;
-  --bubble-in-text: #1b1d1c;
+  --bubble-in-text: #1a1a1e;
 
-  --check-read: #2f7d6d;
-  --badge: #2f7d6d;
+  --check-read: #1e40af;
+  --badge: #1e40af;
   --badge-muted: #a5aaa6;
   --danger: #c8553d;
   --danger-soft: #f7e3de;
@@ -36,29 +36,29 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-app: #121513;
-  --surface: #1a1e1c;
-  --surface-2: #222725;
-  --chat-bg: #0e1110;
+  --bg-app: #141416;
+  --surface: #1c1c1f;
+  --surface-2: #242428;
+  --chat-bg: #101012;
   --divider: #ffffff0d;
   --overlay: rgb(0 0 0 / 0.5);
 
-  --text: #e6e8e5;
-  --text-2: #9aa29d;
-  --text-3: #6a726d;
+  --text: #ececef;
+  --text-2: #9b9ba3;
+  --text-3: #6c6c74;
 
-  --accent: #4fb39b;
-  --accent-hover: #62c2aa;
-  --accent-soft: #1f3a33;
-  --on-accent: #0e1110;
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;
+  --accent-soft: #152a4a;
+  --on-accent: #ffffff;
 
-  --bubble-out: #24463c;
-  --bubble-out-text: #e3f2ec;
-  --bubble-in: #1f2422;
-  --bubble-in-text: #e6e8e5;
+  --bubble-out: #1e3354;
+  --bubble-out-text: #dce8fc;
+  --bubble-in: #222226;
+  --bubble-in-text: #ececef;
 
-  --check-read: #6fd0b6;
-  --badge: #4fb39b;
+  --check-read: #3b82f6;
+  --badge: #2563eb;
   --badge-muted: #4a514d;
   --danger: #e07a62;
   --danger-soft: #3a2420;

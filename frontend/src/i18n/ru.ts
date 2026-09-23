@@ -18,6 +18,8 @@ export const ru = {
   "auth.toSignUp": "Нет аккаунта? Зарегистрироваться",
   "auth.toSignIn": "Уже есть аккаунт? Войти",
   "auth.tagline": "Переписка без лишнего шума",
+  "auth.showPassword": "Показать пароль",
+  "auth.hidePassword": "Скрыть пароль",
 
   "menu.profile": "Мой профиль",
   "menu.contacts": "Контакты",

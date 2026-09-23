@@ -20,6 +20,8 @@ export const en: Dictionary = {
   "auth.toSignUp": "No account? Sign up",
   "auth.toSignIn": "Already have an account? Sign in",
   "auth.tagline": "Conversations without the noise",
+  "auth.showPassword": "Show password",
+  "auth.hidePassword": "Hide password",
 
   "menu.profile": "My profile",
   "menu.contacts": "Contacts",
