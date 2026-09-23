@@ -1,0 +1,20 @@
+aioboto3>=13
+alembic>=1.13
+argon2-cffi>=23
+asyncpg>=0.29
+celery>=5.4
+fastapi>=0.115
+pillow>=10
+pydantic[email]>=2.7
+pydantic-settings>=2.3
+pyjwt>=2.8
+redis>=5
+slowapi>=0.1.9
+sqlalchemy[asyncio]>=2.0.30
+uvicorn[standard]>=0.30
+
+# dev / tests
+httpx>=0.27
+pytest>=8
+pytest-asyncio>=0.23
+ruff>=0.6
