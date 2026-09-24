@@ -185,7 +185,7 @@ async def count_unread_by_chats(db: AsyncSession, user_id: UUID, chat_ids: Seque
     if not chat_ids:
         return {}
     result = await db.execute(
-        select(MessageStatus.chat_id, func.count())
+        select(MessageStatus.chat_id, func.count(func.distinct(MessageStatus.message_id)))
         .join(Message, Message.id == MessageStatus.message_id)
         .join(
             ChatMember,

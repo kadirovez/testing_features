@@ -16,9 +16,18 @@
 .tile {
   position: relative;
   aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: inherit;
+  color: inherit;
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
+}
+
+.tile:disabled {
+  cursor: default;
 }
 
 .tileImage {

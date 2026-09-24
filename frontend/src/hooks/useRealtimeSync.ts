@@ -27,11 +27,15 @@ export function useRealtimeSync(actions: ChatActions): void {
 
     const unsubscribe = [
       onEvent("message_new", async ({ message }) => {
+        const hadChat = Boolean(stateRef.current.chats.byId[message.chat_id]);
+        const alreadyHadMessage = Boolean(stateRef.current.messages.byId[message.id]);
         await actions.ensureChat(message.chat_id);
         const isActive = stateRef.current.ui.activeChatId === message.chat_id;
         const isOwn = message.sender_id === meId();
+        // Fresh chat from API already includes this message in unread_count; only bump locally when we had the chat row.
+        const incrementUnread = !isOwn && !isActive && hadChat && !alreadyHadMessage;
         dispatch({ type: "messages/upserted", message });
-        dispatch({ type: "chats/messageArrived", message, incrementUnread: !isOwn && !isActive });
+        dispatch({ type: "chats/messageArrived", message, incrementUnread });
         if (!isOwn && message.sender_id) {
           dispatch({ type: "users/typing", chatId: message.chat_id, userId: message.sender_id, isTyping: false });
           realtime.send({ type: "message_delivered", payload: { message_ids: [message.id] } });
