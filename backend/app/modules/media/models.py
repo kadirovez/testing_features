@@ -16,6 +16,7 @@ class MediaKind(StrEnum):
 class MediaPurpose(StrEnum):
     AVATAR = "avatar"
     CHAT_AVATAR = "chat_avatar"
+    CHAT_WALLPAPER = "chat_wallpaper"
     MESSAGE = "message"
 
 

@@ -1,5 +1,28 @@
-import type { MediaRead, MessageCreate, MessageRead, Page, UploadCreate, UserUpdate } from "../api/types";
+import type { MediaRead, MessageCreate, MessageRead, Page, SettingsRead, UploadCreate, UserUpdate } from "../api/types";
 import { CHATS, CONTACTS, GROUP_MEMBERS, ME, MESSAGES, SETTINGS, USERS } from "./data";
+
+const MOCK_SETTINGS_KEY = "messenger-mock-settings";
+
+function persistMockSettings(): void {
+  try {
+    sessionStorage.setItem(MOCK_SETTINGS_KEY, JSON.stringify(SETTINGS));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function restoreMockSettings(): void {
+  try {
+    const raw = sessionStorage.getItem(MOCK_SETTINGS_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw) as SettingsRead;
+    Object.assign(SETTINGS, saved);
+  } catch {
+    /* ignore corrupt snapshot */
+  }
+}
+
+restoreMockSettings();
 
 type Query = Record<string, string | number | undefined | null> | undefined;
 type Handler = (params: string[], query: Query, body: unknown) => unknown;
@@ -30,6 +53,8 @@ function placeholderImage(seed: string): string {
 function page<T>(items: T[]): Page<T> {
   return { items, next_cursor: null };
 }
+
+let groupSeq = 0;
 
 function chatMessages(chatId: string, limit: number): Page<MessageRead> {
   const items = MESSAGES.filter((m) => m.chat_id === chatId && !m.is_deleted)
@@ -79,13 +104,37 @@ const routes: Array<[string, RegExp, Handler]> = [
       return contact;
     },
   ],
-  ["GET", /^\/settings$/, () => SETTINGS],
-  ["PATCH", /^\/settings$/, (_p, _q, body) => Object.assign(SETTINGS, body)],
-  ["PUT", /^\/settings\/theme$/, (_p, _q, body) => Object.assign(SETTINGS, body)],
+  [
+    "GET",
+    /^\/settings$/,
+    () => {
+      restoreMockSettings();
+      return SETTINGS;
+    },
+  ],
+  [
+    "PATCH",
+    /^\/settings$/,
+    (_p, _q, body) => {
+      Object.assign(SETTINGS, body);
+      persistMockSettings();
+      return SETTINGS;
+    },
+  ],
+  [
+    "PUT",
+    /^\/settings\/theme$/,
+    (_p, _q, body) => {
+      const patch = body as { theme?: Record<string, unknown> };
+      if (patch.theme) SETTINGS.theme = { ...SETTINGS.theme, ...patch.theme };
+      persistMockSettings();
+      return SETTINGS;
+    },
+  ],
   ["GET", /^\/chats$/, () => page([...CHATS].sort((a, b) => b.last_message_at.localeCompare(a.last_message_at)))],
   [
     "POST",
-    /^\/chats\/([^/]+)\/leave$/,
+    /^\/chats\/([^/]+)\/(leave|dismiss)$/,
     ([id]) => {
       const idx = CHATS.findIndex((c) => c.id === id);
       if (idx >= 0) CHATS.splice(idx, 1);
@@ -114,6 +163,40 @@ const routes: Array<[string, RegExp, Handler]> = [
         peer: { id: user.id, username: user.username, display_name: user.display_name, avatar_media_id: user.avatar_media_id },
       };
       CHATS.push(chat);
+      return chat;
+    },
+  ],
+  [
+    "POST",
+    /^\/chats\/group$/,
+    (_p, _q, body) => {
+      const data = body as { title: string; member_ids: string[] };
+      const id = `c-g-${++groupSeq}`;
+      const chat = {
+        id,
+        type: "group" as const,
+        title: data.title,
+        description: null,
+        avatar_media_id: null,
+        created_by: ME.id,
+        created_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+        my_role: "owner" as const,
+        unread_count: 0,
+        peer: null,
+      };
+      CHATS.push(chat);
+      GROUP_MEMBERS[id] = [ME.id, ...data.member_ids];
+      return chat;
+    },
+  ],
+  [
+    "PATCH",
+    /^\/chats\/([^/]+)$/,
+    ([id], _q, body) => {
+      const chat = CHATS.find((c) => c.id === id);
+      if (!chat) throw new Error("chat not found");
+      Object.assign(chat, body as Record<string, unknown>);
       return chat;
     },
   ],

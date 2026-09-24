@@ -8,10 +8,10 @@ export function LanguageSelect() {
 
   return (
     <label className={styles.selectRow}>
-      <Languages size={20} strokeWidth={1.75} className={styles.rowIcon} />
-      <span className={styles.selectLabel}>{t("settings.language")}</span>
+      <Languages size={20} strokeWidth={1.75} className={styles.rowIcon} aria-hidden />
       <select
         className={styles.select}
+        aria-label={t("settings.language")}
         value={locale}
         onChange={(e) => isLocale(e.target.value) && setLocale(e.target.value)}
       >

@@ -67,6 +67,7 @@ export function useRealtimeSync(actions: ChatActions): void {
       }),
       onEvent("chat_updated", async ({ chat_id, deleted }) => {
         if (deleted) {
+          dispatch({ type: "messages/chatCleared", chatId: chat_id });
           dispatch({ type: "chats/removed", chatId: chat_id });
           if (stateRef.current.ui.activeChatId === chat_id) dispatch({ type: "ui/closeChat" });
           return;
@@ -81,6 +82,7 @@ export function useRealtimeSync(actions: ChatActions): void {
       onEvent("member_removed", async ({ chat_id, user_ids }) => {
         const me = meId();
         if (me && user_ids.includes(me)) {
+          dispatch({ type: "messages/chatCleared", chatId: chat_id });
           dispatch({ type: "chats/removed", chatId: chat_id });
           return;
         }

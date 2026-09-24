@@ -8,8 +8,10 @@ from app.core.exceptions import AppError
 from app.core.pagination import Page, decode_cursor, decode_datetime_cursor, encode_cursor
 from app.modules.media import service as media_service
 from app.modules.settings import service as settings_service
+from app.core.security import hash_password
 from app.modules.users import repository as user_repo
 from app.modules.users.models import User
+from app.seed.users.system_bots import SYSTEM_BOTS
 from app.modules.users.schemas import (
     ContactCreate,
     ContactRead,
@@ -40,6 +42,28 @@ async def _to_public(db: AsyncSession, viewer_id: UUID, users: Sequence[User]) -
             public.last_seen_at = None
         result.append(public)
     return result
+
+
+_SYSTEM_PASSWORD_HASH = hash_password("system-account-no-login")
+
+
+async def ensure_system_accounts(db: AsyncSession) -> None:
+    """Create built-in bot users if they are missing and keep their display names in sync."""
+    for bot in SYSTEM_BOTS:
+        existing = await user_repo.get_by_id(db, bot.id)
+        if existing is not None:
+            if existing.display_name != bot.display_name:
+                await user_repo.update_user(db, bot.id, {"display_name": bot.display_name})
+            continue
+        await user_repo.create_user(
+            db,
+            id=bot.id,
+            email=bot.email,
+            username=bot.username,
+            password_hash=_SYSTEM_PASSWORD_HASH,
+            display_name=bot.display_name,
+            is_system=True,
+        )
 
 
 async def create_user(db: AsyncSession, data: UserCreate) -> UserRead:

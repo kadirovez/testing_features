@@ -23,6 +23,14 @@ async def create_upload(request: Request, data: UploadCreate, db: DbDep, current
     return await media_service.create_upload(db, current.user_id, data)
 
 
+@router.put("/{media_id}/content", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(MEDIA_LIMIT)
+async def upload_content(request: Request, media_id: UUID, db: DbDep, current: CurrentDep) -> None:
+    body = await request.body()
+    content_type = request.headers.get("content-type")
+    await media_service.upload_pending_content(db, current.user_id, media_id, body, content_type)
+
+
 @router.post("/{media_id}/complete", response_model=MediaRead)
 @limiter.limit(MEDIA_LIMIT)
 async def confirm_upload(request: Request, media_id: UUID, db: DbDep, current: CurrentDep) -> MediaRead:

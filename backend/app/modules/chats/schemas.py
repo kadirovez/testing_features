@@ -65,3 +65,4 @@ class MemberInfo(BaseModel):
     role: ChatRole
     chat_type: ChatType
     can_moderate: bool
+    history_cleared_at: datetime | None = None

@@ -51,3 +51,4 @@ class ChatMember(UUIDPkMixin, Base):
     muted_until: Mapped[datetime | None]
     joined_at: Mapped[datetime] = mapped_column(server_default=func.now())
     left_at: Mapped[datetime | None]
+    history_cleared_at: Mapped[datetime | None]

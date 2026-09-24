@@ -184,10 +184,13 @@
 }
 
 .select {
+  flex: 1;
+  margin-left: auto;
   border: 0;
   background: none;
   color: var(--accent);
   font-weight: 500;
+  text-align: right;
   cursor: pointer;
   outline: 0;
 }

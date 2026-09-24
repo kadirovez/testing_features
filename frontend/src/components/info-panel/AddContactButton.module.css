@@ -1,0 +1,80 @@
+.button {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: var(--space-2);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .button:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.button:disabled {
+  cursor: default;
+}
+
+.pending {
+  opacity: 0.55;
+}
+
+.success {
+  color: var(--success, #3ba55d);
+}
+
+.exit {
+  opacity: 0;
+  transform: scale(0.72);
+  pointer-events: none;
+}
+
+.icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 220ms var(--ease),
+    transform 220ms var(--ease);
+}
+
+.plus {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.check {
+  opacity: 0;
+  transform: scale(0.45) rotate(-48deg);
+}
+
+.success .plus {
+  opacity: 0;
+  transform: scale(0.45) rotate(48deg);
+}
+
+.success .check,
+.exit .check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.exit .plus {
+  opacity: 0;
+}

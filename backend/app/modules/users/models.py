@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, UniqueConstraint, func, true
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, UniqueConstraint, false, func, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, CreatedAtMixin, TimestampMixin, UUIDPkMixin
@@ -19,6 +19,7 @@ class User(UUIDPkMixin, TimestampMixin, Base):
         ForeignKey("media_files.id", ondelete="SET NULL", use_alter=True)
     )
     is_active: Mapped[bool] = mapped_column(default=True, server_default=true())
+    is_system: Mapped[bool] = mapped_column(default=False, server_default=false())
     last_seen_at: Mapped[datetime | None]
     deleted_at: Mapped[datetime | None]
 

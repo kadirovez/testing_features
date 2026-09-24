@@ -10,6 +10,8 @@ import { Dropdown, DropdownItem } from "../shared/Dropdown";
 import styles from "./MessageInput.module.css";
 
 const MAX_HEIGHT_PX = 180;
+/** scrollHeight of a single empty line (matches textarea line-height in CSS). */
+const SINGLE_LINE_HEIGHT_PX = 20;
 
 interface MessageInputProps {
   chatId: UUID;
@@ -22,6 +24,7 @@ export function MessageInput({ chatId }: MessageInputProps) {
   const [sending, setSending] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [multiline, setMultiline] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const notifyTyping = useTypingNotifier(chatId);
@@ -32,14 +35,17 @@ export function MessageInput({ chatId }: MessageInputProps) {
     setText("");
     setError(null);
     setAttachOpen(false);
+    setMultiline(false);
   }, [chatId]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`;
+    const nextHeight = Math.min(el.scrollHeight, MAX_HEIGHT_PX);
+    el.style.height = `${nextHeight}px`;
     el.style.overflowY = el.scrollHeight > MAX_HEIGHT_PX ? "auto" : "hidden";
+    setMultiline(nextHeight > SINGLE_LINE_HEIGHT_PX + 1);
   }, [text]);
 
   const canSend = text.trim().length > 0 && !sending;
@@ -91,7 +97,7 @@ export function MessageInput({ chatId }: MessageInputProps) {
     <div className={styles.dock}>
       {error && <span className={styles.error}>{error}</span>}
       <div className={styles.row}>
-        <div className={styles.field}>
+        <div className={cx(styles.field, multiline && styles.fieldMultiline)}>
           <textarea
             ref={ref}
             rows={1}

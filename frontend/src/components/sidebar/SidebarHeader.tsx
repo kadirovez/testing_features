@@ -11,7 +11,9 @@ export function SidebarHeader({ query, onQueryChange }: SidebarHeaderProps) {
   return (
     <header className={styles.header}>
       <HamburgerMenu />
-      <SearchInput value={query} onChange={onQueryChange} />
+      <div className={styles.searchSlot}>
+        <SearchInput value={query} onChange={onQueryChange} />
+      </div>
     </header>
   );
 }

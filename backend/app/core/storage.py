@@ -21,6 +21,33 @@ def _client(public: bool = False) -> Any:
     return _session.client("s3", endpoint_url=endpoint, config=_client_config)
 
 
+def _bucket_cors_origins() -> list[str]:
+    if settings.CORS_ORIGINS:
+        return list(settings.CORS_ORIGINS)
+    return ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+
+async def _ensure_bucket_cors(s3: Any) -> None:
+    """Allow browser uploads and downloads against the public MinIO endpoint."""
+    origins = _bucket_cors_origins()
+    if not origins:
+        return
+    await s3.put_bucket_cors(
+        Bucket=settings.S3_BUCKET,
+        CORSConfiguration={
+            "CORSRules": [
+                {
+                    "AllowedHeaders": ["*"],
+                    "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+                    "AllowedOrigins": origins,
+                    "ExposeHeaders": ["ETag", "Content-Length"],
+                    "MaxAgeSeconds": 3600,
+                }
+            ]
+        },
+    )
+
+
 async def ensure_bucket() -> None:
     """Create the media bucket if it does not exist yet."""
     async with _client() as s3:
@@ -28,6 +55,10 @@ async def ensure_bucket() -> None:
             await s3.head_bucket(Bucket=settings.S3_BUCKET)
         except ClientError:
             await s3.create_bucket(Bucket=settings.S3_BUCKET)
+        try:
+            await _ensure_bucket_cors(s3)
+        except ClientError:
+            pass
 
 
 async def generate_presigned_upload(key: str, content_type: str, max_size: int) -> dict[str, Any]:

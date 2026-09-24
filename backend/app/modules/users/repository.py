@@ -14,7 +14,7 @@ def _escape_like(value: str) -> str:
 
 
 async def create_user(db: AsyncSession, **values: Any) -> User:
-    """Insert a new user row."""
+    """Insert a new user row (optional `id` for seeded system accounts)."""
     user = User(**values)
     db.add(user)
     await db.flush()
@@ -77,6 +77,7 @@ async def search_users(
     stmt = select(User).where(
         User.deleted_at.is_(None),
         User.is_active.is_(True),
+        User.is_system.is_(False),
         User.id != exclude_user_id,
         or_(sort_key.like(pattern, escape="\\"), func.lower(User.display_name).like(pattern, escape="\\")),
     )

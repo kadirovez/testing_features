@@ -26,6 +26,7 @@ class UserCredentials(BaseModel):
     id: UUID
     password_hash: str
     is_active: bool
+    is_system: bool
 
 
 class UserBrief(BaseModel):

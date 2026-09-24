@@ -34,7 +34,7 @@ export function setUnauthorizedHandler(handler: () => void): void {
   onUnauthorized = handler;
 }
 
-function buildUrl(path: string, query?: Query): string {
+export function buildUrl(path: string, query?: Query): string {
   const params = new URLSearchParams();
   Object.entries(query ?? {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null) params.set(key, String(value));
@@ -100,6 +100,28 @@ export async function request<T>(method: Method, path: string, options: RequestO
   if (!response.ok) throw await toApiError(response);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+/** Upload raw file bytes through the API (same-origin), avoiding direct S3 CORS. */
+export async function uploadBinary(path: string, file: File): Promise<void> {
+  if (config.useMocks) return;
+
+  const headers: Record<string, string> = { "Content-Type": file.type || "application/octet-stream" };
+  const token = tokenStorage.get()?.accessToken;
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let response = await fetch(buildUrl(path), { method: "PUT", headers, body: file });
+  if (response.status === 401) {
+    if (await ensureFreshTokens()) {
+      const refreshed = tokenStorage.get()?.accessToken;
+      if (refreshed) headers.Authorization = `Bearer ${refreshed}`;
+      response = await fetch(buildUrl(path), { method: "PUT", headers, body: file });
+    } else {
+      tokenStorage.clear();
+      onUnauthorized();
+    }
+  }
+  if (!response.ok) throw await toApiError(response);
 }
 
 export const http = {

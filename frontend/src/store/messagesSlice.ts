@@ -16,6 +16,7 @@ export type MessagesAction =
   | { type: "messages/pageLoaded"; chatId: UUID; messages: MessageRead[]; nextCursor: string | null }
   | { type: "messages/upserted"; message: MessageRead }
   | { type: "messages/removed"; chatId: UUID; messageId: UUID }
+  | { type: "messages/chatCleared"; chatId: UUID }
   | { type: "messages/status"; messageIds: UUID[]; status: DeliveryStatus }
   | { type: "messages/mediaPatched"; media: MediaBrief };
 
@@ -67,6 +68,25 @@ export function messagesReducer(state: MessagesState, action: MessagesAction): M
       if (!timeline) return { ...state, byId };
       const ids = timeline.ids.filter((id) => id !== action.messageId);
       return { ...state, byId, byChat: { ...state.byChat, [action.chatId]: { ...timeline, ids } } };
+    }
+    case "messages/chatCleared": {
+      const timeline = state.byChat[action.chatId];
+      if (!timeline) return state;
+      const byId = { ...state.byId };
+      const status = { ...state.status };
+      timeline.ids.forEach((id) => {
+        delete byId[id];
+        delete status[id];
+      });
+      return {
+        ...state,
+        byId,
+        status,
+        byChat: {
+          ...state.byChat,
+          [action.chatId]: { ids: [], nextCursor: null, loaded: false },
+        },
+      };
     }
     case "messages/status": {
       const status = { ...state.status };

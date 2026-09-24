@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.client import get_client_ip, get_user_agent
 from app.core.database import get_db
+from app.core.i18n.locale import get_locale
 from app.core.rate_limit import AUTH_LIMIT, limiter
 from app.modules.auth import service as auth_service
 from app.modules.auth.dependencies import get_current_session
@@ -32,7 +33,7 @@ def _device(request: Request, device_name: str | None = None) -> DeviceInfo:
 @router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
 @limiter.limit(AUTH_LIMIT)
 async def register(request: Request, data: RegisterRequest, db: DbDep) -> TokenPair:
-    return await auth_service.register_user(db, data, _device(request, data.device_name))
+    return await auth_service.register_user(db, data, _device(request, data.device_name), get_locale(request))
 
 
 @router.post("/login", response_model=TokenPair)

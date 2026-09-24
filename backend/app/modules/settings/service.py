@@ -10,7 +10,9 @@ from app.core.exceptions import AppError
 from app.core.i18n.types import Locale
 from app.modules.settings import repository as settings_repo
 from app.modules.settings.models import OnlineStatusVisibility, UserSettings
+from app.modules.media import service as media_service
 from app.modules.settings.schemas import PrivacyFlags, SettingsRead, SettingsUpdate, ThemeUpdate
+from app.modules.settings.theme_config import merge_theme_document, normalize_theme_document
 from app.modules.users import service as users_service
 from app.seed.errors.settings import INVALID_THEME_CONFIG, THEME_CONFIG_TOO_LARGE, UNSUPPORTED_LANGUAGE
 
@@ -57,18 +59,39 @@ async def update_app_settings(db: AsyncSession, user_id: UUID, data: SettingsUpd
     return SettingsRead.model_validate(updated)
 
 
+async def _validate_theme_document(db: AsyncSession, user_id: UUID, theme: dict[str, Any]) -> dict[str, Any]:
+    """Validate known theme keys and return a JSON-serializable document."""
+    from pydantic import ValidationError
+
+    try:
+        normalized = normalize_theme_document(theme)
+    except ValidationError:
+        raise AppError(INVALID_THEME_CONFIG) from None
+
+    wallpaper = normalized.get("chatWallpaper")
+    if isinstance(wallpaper, dict) and wallpaper.get("kind") == "custom":
+        media_id = wallpaper.get("mediaId")
+        if media_id is None or not await media_service.is_valid_chat_wallpaper(db, UUID(str(media_id)), user_id):
+            raise AppError(INVALID_THEME_CONFIG)
+
+    return normalized
+
+
 async def update_theme(db: AsyncSession, user_id: UUID, data: ThemeUpdate) -> SettingsRead:
     """Replace the user's theme customization JSON."""
+    current = await _get_or_create(db, user_id)
+    merged = merge_theme_document(dict(current.theme or {}), data.theme)
+    validated = await _validate_theme_document(db, user_id, merged)
+
     # theme payload exceeds the allowed size
-    if len(json.dumps(data.theme).encode()) > app_config.THEME_MAX_BYTES:
+    if len(json.dumps(validated).encode()) > app_config.THEME_MAX_BYTES:
         raise AppError(THEME_CONFIG_TOO_LARGE)
 
     # theme payload is nested too deeply
-    if _json_depth(data.theme) > app_config.THEME_MAX_DEPTH:
+    if _json_depth(validated) > app_config.THEME_MAX_DEPTH:
         raise AppError(INVALID_THEME_CONFIG)
 
-    await _get_or_create(db, user_id)
-    updated = await settings_repo.update_settings(db, user_id, {"theme": data.theme})
+    updated = await settings_repo.update_settings(db, user_id, {"theme": validated})
     await db.commit()
     return SettingsRead.model_validate(updated)
 

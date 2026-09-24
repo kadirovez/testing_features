@@ -103,6 +103,27 @@ async def _get_chat_or_raise(db: AsyncSession, chat_id: UUID) -> Chat:
     return chat
 
 
+async def ensure_direct_chat(
+    db: AsyncSession, user_a: UUID, user_b: UUID, *, created_by: UUID | None = None
+) -> Chat:
+    """Return the direct chat between two users, creating it and rejoining leavers if needed."""
+    direct_key = _direct_key(user_a, user_b)
+    existing = await chat_repo.get_by_direct_key(db, direct_key)
+    if existing is not None:
+        for user_id in (user_a, user_b):
+            member = await chat_repo.get_member_any_state(db, existing.id, user_id)
+            if member is not None and member.left_at is not None:
+                await chat_repo.update_member(
+                    db, member.id, {"left_at": None, "joined_at": datetime.now(UTC)}
+                )
+        return existing
+
+    creator = created_by or user_a
+    chat = await chat_repo.create_chat(db, type=ChatType.DIRECT, created_by=creator, direct_key=direct_key)
+    await chat_repo.add_members(db, chat.id, [(user_a, ChatRole.MEMBER), (user_b, ChatRole.MEMBER)])
+    return chat
+
+
 async def create_direct_chat(db: AsyncSession, actor_id: UUID, data: DirectChatCreate) -> ChatRead:
     """Return the direct chat between two users, creating it on first request."""
     # users cannot open a direct chat with themselves
@@ -122,8 +143,7 @@ async def create_direct_chat(db: AsyncSession, actor_id: UUID, data: DirectChatC
         member = await chat_repo.get_member(db, existing.id, actor_id)
         return await _build_chat_read(db, actor_id, existing, member)
 
-    chat = await chat_repo.create_chat(db, type=ChatType.DIRECT, created_by=actor_id, direct_key=direct_key)
-    await chat_repo.add_members(db, chat.id, [(actor_id, ChatRole.MEMBER), (data.user_id, ChatRole.MEMBER)])
+    chat = await ensure_direct_chat(db, actor_id, data.user_id, created_by=actor_id)
     await db.commit()
     await _publish([actor_id, data.user_id], WSEventType.MEMBER_ADDED, MemberEventPayload(chat_id=chat.id, user_ids=[actor_id, data.user_id]))
     member = await chat_repo.get_member(db, chat.id, actor_id)
@@ -188,11 +208,11 @@ async def update_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID, data: Cha
     if member is None:
         raise AppError(NOT_CHAT_MEMBER)
 
-    # only owners and admins can edit the chat
-    if member.role not in _MANAGER_ROLES:
+    values = data.model_dump(exclude_unset=True)
+    # title and description require owner or admin; any member may change the avatar
+    if {"title", "description"} & values.keys() and member.role not in _MANAGER_ROLES:
         raise AppError(NOT_ALLOWED_TO_EDIT_CHAT)
 
-    values = data.model_dump(exclude_unset=True, exclude_none=True)
     avatar_media_id = values.get("avatar_media_id")
     # chat avatar must be a photo uploaded by the actor for this purpose
     if avatar_media_id is not None and not await media_service.is_valid_chat_avatar(db, avatar_media_id, actor_id):
@@ -228,6 +248,7 @@ async def delete_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
         raise AppError(NOT_ALLOWED_TO_DELETE_CHAT)
 
     member_ids = await chat_repo.list_active_member_ids(db, chat_id)
+    await messages_service.purge_chat_messages(db, chat_id)
     await chat_repo.update_chat(db, chat_id, {"deleted_at": datetime.now(UTC)})
     await db.commit()
     await _publish(member_ids, WSEventType.CHAT_UPDATED, ChatEventPayload(chat_id=chat_id, deleted=True))
@@ -268,8 +289,16 @@ async def add_member_to_chat(db: AsyncSession, chat_id: UUID, actor_id: UUID, ne
         raise AppError(USER_ALREADY_MEMBER)
 
     if existing is not None:
+        rejoined_at = datetime.now(UTC)
         member = await chat_repo.update_member(
-            db, existing.id, {"left_at": None, "role": ChatRole.MEMBER, "joined_at": datetime.now(UTC)}
+            db,
+            existing.id,
+            {
+                "left_at": None,
+                "role": ChatRole.MEMBER,
+                "joined_at": rejoined_at,
+                "history_cleared_at": rejoined_at,
+            },
         )
     else:
         member = await chat_repo.add_member(db, chat_id, new_member_id, ChatRole.MEMBER)
@@ -377,7 +406,7 @@ async def change_member_role(db: AsyncSession, actor_id: UUID, chat_id: UUID, us
 
 
 async def dismiss_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
-    """Remove a chat from the actor's sidebar without deleting history for others."""
+    """Remove a chat from the actor's sidebar and hide its history for them only."""
     await leave_chat(db, actor_id, chat_id)
 
 
@@ -389,8 +418,11 @@ async def leave_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
     if member is None:
         raise AppError(NOT_CHAT_MEMBER)
 
+    now = datetime.now(UTC)
     if chat.type == ChatType.DIRECT:
-        await chat_repo.update_member(db, member.id, {"left_at": datetime.now(UTC)})
+        await chat_repo.update_member(
+            db, member.id, {"left_at": now, "history_cleared_at": now}
+        )
         await db.commit()
         return
 
@@ -400,9 +432,11 @@ async def leave_chat(db: AsyncSession, actor_id: UUID, chat_id: UUID) -> None:
         raise AppError(OWNER_MUST_TRANSFER_OWNERSHIP)
 
     recipients = await chat_repo.list_active_member_ids(db, chat_id)
-    now = datetime.now(UTC)
-    await chat_repo.update_member(db, member.id, {"left_at": now})
+    await chat_repo.update_member(
+        db, member.id, {"left_at": now, "history_cleared_at": now}
+    )
     if member_count == 1:
+        await messages_service.purge_chat_messages(db, chat_id)
         await chat_repo.update_chat(db, chat_id, {"deleted_at": now})
     await db.commit()
     await _publish(recipients, WSEventType.MEMBER_REMOVED, MemberEventPayload(chat_id=chat_id, user_ids=[actor_id]))
@@ -426,6 +460,7 @@ async def ensure_member(db: AsyncSession, chat_id: UUID, user_id: UUID) -> Membe
         role=member.role,
         chat_type=chat.type,
         can_moderate=chat.type == ChatType.GROUP and member.role in _MANAGER_ROLES,
+        history_cleared_at=member.history_cleared_at,
     )
 
 

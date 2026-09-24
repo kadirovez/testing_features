@@ -3,6 +3,7 @@ import "@fontsource/golos-text/500.css";
 import "@fontsource/golos-text/600.css";
 import "./styles/tokens.css";
 import "./styles/themes.css";
+import "./styles/accent.css";
 import "./styles/global.css";
 
 import { StrictMode } from "react";

@@ -195,9 +195,11 @@ async def list_messages(
     db: AsyncSession, user_id: UUID, chat_id: UUID, cursor: str | None, limit: int, locale: str
 ) -> Page[MessageRead]:
     """List chat history newest first; soft-deleted messages are returned as tombstones."""
-    await chats_service.ensure_member(db, chat_id, user_id)
+    member = await chats_service.ensure_member(db, chat_id, user_id)
     before = decode_datetime_cursor(cursor) if cursor else None
-    messages = await message_repo.list_messages(db, chat_id, before, limit + 1)
+    messages = await message_repo.list_messages(
+        db, chat_id, before, limit + 1, visible_after=member.history_cleared_at
+    )
     has_more = len(messages) > limit
     messages = messages[:limit]
     next_cursor = encode_cursor(messages[-1].created_at, messages[-1].id) if has_more else None
@@ -227,6 +229,12 @@ async def edit_message(
     await db.commit()
     await _publish_message_event(db, WSEventType.MESSAGE_UPDATED, message)
     return await _render_one(db, message, locale)
+
+
+async def purge_chat_messages(db: AsyncSession, chat_id: UUID) -> None:
+    """Permanently remove all messages in a chat and reset its activity timestamp."""
+    await message_repo.delete_all_in_chat(db, chat_id)
+    await chats_service.touch_last_message_at(db, chat_id, _now())
 
 
 async def delete_message(db: AsyncSession, user_id: UUID, message_id: UUID) -> None:

@@ -12,7 +12,12 @@
   inset: 0;
   z-index: -1;
   background-image: var(--chat-bg-image);
-  background-size: 240px;
+  background-size: var(--chat-bg-size, 240px);
+  background-position: var(--chat-bg-position, top left);
+  background-repeat: var(--chat-bg-repeat, repeat);
   opacity: var(--chat-pattern-opacity);
-  transition: opacity var(--dur) var(--ease);
+  filter: var(--chat-wallpaper-filter, none);
+  transition:
+    opacity var(--dur) var(--ease),
+    filter var(--dur) var(--ease);
 }

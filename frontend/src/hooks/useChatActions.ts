@@ -147,7 +147,7 @@ export function useChatActions() {
 
       void Promise.all(
         reserved.map(async (upload, index) => {
-          if (!config.useMocks) await mediaApi.uploadToStorage(upload, files[index]);
+          if (!config.useMocks) await mediaApi.putContent(upload.media.id, files[index]);
           const media = await mediaApi.complete(upload.media.id);
           dispatch({ type: "messages/mediaPatched", media });
         }),
@@ -158,9 +158,20 @@ export function useChatActions() {
     [dispatch],
   );
 
+  const createGroup = useCallback(
+    async (title: string, memberIds: UUID[]) => {
+      const chat = await chatsApi.createGroup(title, memberIds);
+      dispatch({ type: "chats/upserted", chat });
+      await openChat(chat.id);
+      dispatch({ type: "ui/setInfoOpen", open: true });
+    },
+    [dispatch, openChat],
+  );
+
   const dismissChat = useCallback(
     async (chatId: UUID) => {
       await chatsApi.dismiss(chatId);
+      dispatch({ type: "messages/chatCleared", chatId });
       dispatch({ type: "chats/removed", chatId });
       if (stateRef.current.ui.activeChatId === chatId) {
         dispatch({ type: "ui/closeChat" });
@@ -194,10 +205,11 @@ export function useChatActions() {
       sendMessage,
       sendImages,
       deleteMessage,
+      createGroup,
       dismissChat,
       markRead,
     }),
-    [loadChats, ensureChat, openChat, openDirectWith, loadHistory, sendMessage, sendImages, deleteMessage, dismissChat, markRead],
+    [loadChats, ensureChat, openChat, openDirectWith, loadHistory, sendMessage, sendImages, createGroup, deleteMessage, dismissChat, markRead],
   );
 }
 

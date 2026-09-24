@@ -1,6 +1,8 @@
 import { useLocale } from "../../context/LocaleContext";
 import { ThemeToggle } from "../shared/ThemeToggle";
 import { AvatarPicker } from "./settings/AvatarPicker";
+import { AccentPicker } from "./settings/AccentPicker";
+import { ChatWallpaperPicker } from "./settings/ChatWallpaperPicker";
 import { LanguageSelect } from "./settings/LanguageSelect";
 import { UsernameField } from "./settings/UsernameField";
 import { ViewHeader } from "./ViewHeader";
@@ -21,6 +23,11 @@ export function SettingsView() {
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>{t("settings.appearance")}</h3>
           <ThemeToggle />
+          <AccentPicker />
+          <ChatWallpaperPicker />
+        </section>
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>{t("settings.language")}</h3>
           <LanguageSelect />
         </section>
       </div>

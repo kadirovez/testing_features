@@ -31,6 +31,7 @@ from app.modules.auth.schemas import (
     TokenPair,
 )
 from app.modules.realtime import service as realtime_service
+from app.modules.onboarding import service as onboarding_service
 from app.modules.users import service as users_service
 from app.modules.users.schemas import UserCreate
 from app.seed.errors.auth import (
@@ -118,7 +119,9 @@ async def create_session(db: AsyncSession, user_id: UUID, device: DeviceInfo) ->
     return _build_token_pair(user_id, session_id, refresh_token)
 
 
-async def register_user(db: AsyncSession, data: RegisterRequest, device: DeviceInfo) -> TokenPair:
+async def register_user(
+    db: AsyncSession, data: RegisterRequest, device: DeviceInfo, locale: str
+) -> TokenPair:
     """Register a new user and sign them in on the current device."""
     user = await users_service.create_user(
         db,
@@ -129,6 +132,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest, device: DeviceI
             display_name=data.display_name,
         ),
     )
+    await onboarding_service.setup_for_new_user(db, user.id, locale)
     return await create_session(db, user.id, device)
 
 
@@ -144,6 +148,10 @@ async def login(db: AsyncSession, data: LoginRequest, device: DeviceInfo) -> Tok
     # account is deactivated
     if not credentials.is_active:
         raise AppError(USER_INACTIVE)
+
+    # built-in bot accounts cannot sign in
+    if credentials.is_system:
+        raise AppError(INVALID_CREDENTIALS)
 
     return await create_session(db, credentials.id, device)
 

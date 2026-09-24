@@ -3,6 +3,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LocaleProvider } from "./context/LocaleContext";
 import { StoreProvider } from "./context/StoreContext";
+import { ChatAppearanceProvider } from "./context/ChatAppearanceContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
 function Gate() {
@@ -14,13 +15,15 @@ function Gate() {
 export function App() {
   return (
     <ThemeProvider>
-      <LocaleProvider>
-        <StoreProvider>
-          <AuthProvider>
-            <Gate />
-          </AuthProvider>
-        </StoreProvider>
-      </LocaleProvider>
+      <ChatAppearanceProvider>
+        <LocaleProvider>
+          <StoreProvider>
+            <AuthProvider>
+              <Gate />
+            </AuthProvider>
+          </StoreProvider>
+        </LocaleProvider>
+      </ChatAppearanceProvider>
     </ThemeProvider>
   );
 }

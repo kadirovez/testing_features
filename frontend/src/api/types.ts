@@ -93,7 +93,7 @@ export interface ChatMemberRead {
 
 // ---- media ----
 export type MediaKind = "photo" | "video";
-export type MediaPurpose = "avatar" | "chat_avatar" | "message";
+export type MediaPurpose = "avatar" | "chat_avatar" | "chat_wallpaper" | "message";
 export type MediaStatus = "pending" | "uploaded" | "processing" | "ready" | "failed";
 export type MediaVariant = "original" | "thumbnail";
 

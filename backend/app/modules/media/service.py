@@ -75,8 +75,8 @@ async def create_upload(db: AsyncSession, owner_id: UUID, data: UploadCreate) ->
     if data.mime_type not in _allowed_types(data.kind):
         raise AppError(UNSUPPORTED_MEDIA_TYPE)
 
-    # avatars must be photos
-    if data.purpose in _PUBLIC_PURPOSES and data.kind != MediaKind.PHOTO:
+    # avatars and chat wallpapers must be photos
+    if data.purpose in (*_PUBLIC_PURPOSES, MediaPurpose.CHAT_WALLPAPER) and data.kind != MediaKind.PHOTO:
         raise AppError(UNSUPPORTED_MEDIA_TYPE)
 
     # declared size exceeds the limit for the kind
@@ -105,6 +105,36 @@ async def create_upload(db: AsyncSession, owner_id: UUID, data: UploadCreate) ->
     )
 
 
+async def upload_pending_content(
+    db: AsyncSession, owner_id: UUID, media_id: UUID, data: bytes, content_type: str | None
+) -> None:
+    """Store bytes for a reserved upload in object storage before confirmation."""
+    media = await media_repo.get_by_id(db, media_id)
+    # media does not exist or belongs to another user
+    if media is None or media.owner_id != owner_id:
+        raise AppError(MEDIA_NOT_FOUND)
+
+    # upload was already confirmed
+    if media.status != MediaStatus.PENDING:
+        raise AppError(MEDIA_ALREADY_CONFIRMED)
+
+    actual_size = len(data)
+    # empty body
+    if actual_size == 0:
+        raise AppError(UNSUPPORTED_MEDIA_TYPE)
+
+    # stored object exceeds the limit
+    if actual_size > _max_size(media.kind):
+        raise AppError(MEDIA_TOO_LARGE)
+
+    declared = (content_type or media.mime_type).split(";", 1)[0].strip().lower()
+    # stored content type differs from the declared one
+    if declared != media.mime_type:
+        raise AppError(UNSUPPORTED_MEDIA_TYPE)
+
+    await storage.upload_bytes(media.storage_key, data, media.mime_type)
+
+
 async def confirm_upload(db: AsyncSession, owner_id: UUID, media_id: UUID) -> MediaRead:
     """Verify the object landed in S3 and schedule thumbnail generation."""
     media = await media_repo.get_by_id(db, media_id)
@@ -130,6 +160,14 @@ async def confirm_upload(db: AsyncSession, owner_id: UUID, media_id: UUID) -> Me
     if head.get("ContentType", "").lower() != media.mime_type:
         raise AppError(UNSUPPORTED_MEDIA_TYPE)
 
+    # chat wallpapers only need the original file for the chat background
+    if media.purpose == MediaPurpose.CHAT_WALLPAPER:
+        media = await media_repo.update_media(
+            db, media_id, {"status": MediaStatus.READY, "size_bytes": actual_size}
+        )
+        await db.commit()
+        return MediaRead.model_validate(media)
+
     media = await media_repo.update_media(db, media_id, {"status": MediaStatus.UPLOADED, "size_bytes": actual_size})
     await db.commit()
     media_tasks.generate_thumbnail_task.delay(str(media_id))
@@ -144,8 +182,12 @@ async def get_media(db: AsyncSession, user_id: UUID, media_id: UUID) -> MediaRea
 async def get_download_url(db: AsyncSession, user_id: UUID, media_id: UUID, variant: MediaVariant) -> DownloadUrlRead:
     """Return a presigned GET URL for the original file or its thumbnail."""
     media = await _get_accessible_media(db, user_id, media_id)
-    # file was never uploaded or processing failed
-    if media.status not in _USABLE_STATUSES:
+    downloadable = _USABLE_STATUSES
+    # failed processing must not block serving the original chat wallpaper
+    if media.purpose == MediaPurpose.CHAT_WALLPAPER and variant == MediaVariant.ORIGINAL:
+        downloadable = (*_USABLE_STATUSES, MediaStatus.FAILED)
+    # file was never uploaded or is not available yet
+    if media.status not in downloadable:
         raise AppError(MEDIA_NOT_READY)
 
     # thumbnail is not generated yet
@@ -180,6 +222,18 @@ async def is_valid_chat_avatar(db: AsyncSession, media_id: UUID, owner_id: UUID)
     """Check that media is an uploaded chat avatar photo owned by the user."""
     media = await media_repo.list_owned_with_purpose(
         db, [media_id], owner_id, MediaPurpose.CHAT_AVATAR, _USABLE_STATUSES
+    )
+    return bool(media)
+
+
+async def is_valid_chat_wallpaper(db: AsyncSession, media_id: UUID, owner_id: UUID) -> bool:
+    """Check that media is an uploaded chat wallpaper photo owned by the user."""
+    media = await media_repo.list_owned_with_purpose(
+        db,
+        [media_id],
+        owner_id,
+        MediaPurpose.CHAT_WALLPAPER,
+        (*_USABLE_STATUSES, MediaStatus.FAILED),
     )
     return bool(media)
 

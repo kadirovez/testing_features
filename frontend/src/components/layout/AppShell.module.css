@@ -15,15 +15,28 @@
 }
 
 .sidebar {
+  position: relative;
   flex: 0 0 var(--sidebar-w);
+  min-width: 0;
   border-right: 1px solid var(--divider);
   z-index: 2;
 }
 
+.shell[data-resizing] .sidebar,
+.shell[data-resizing] .chat {
+  transition: transform var(--dur-slow) var(--ease);
+}
+
 .chat {
   flex: 1 1 auto;
-  min-width: 480px;
+  min-width: 0;
   background: var(--chat-bg);
+}
+
+@media (min-width: 1100px) {
+  .chat {
+    min-width: 320px;
+  }
 }
 
 .info {
@@ -45,12 +58,14 @@
 }
 
 /* Desktop: the info column pushes the layout instead of overlaying it. */
-.shell[data-info-open="true"] .info {
-  width: var(--info-w);
-}
+@media (min-width: 1100px) {
+  .shell[data-info-open="true"] .info {
+    width: var(--info-w);
+  }
 
-.shell[data-info-open="true"] .infoInner {
-  transform: none;
+  .shell[data-info-open="true"] .infoInner {
+    transform: none;
+  }
 }
 
 /* Tablet: two columns, info slides over the chat. */
@@ -103,6 +118,7 @@
     position: absolute;
     inset: 0;
     width: 100%;
+    max-width: 100%;
     border: 0;
   }
 
@@ -114,10 +130,13 @@
   .info {
     z-index: 10;
     box-shadow: none;
+    transform: translateX(100%);
   }
 
   .infoInner {
     width: 100%;
+    height: 100%;
+    min-height: 0;
   }
 
   .backdrop {
@@ -125,14 +144,22 @@
   }
 
   .shell[data-chat-open="true"] .sidebar {
-    transform: translateX(-20%);
+    transform: translateX(-100%);
+    visibility: hidden;
   }
 
   .shell[data-chat-open="true"] .chat {
     transform: none;
   }
 
+  .shell[data-info-open="true"] .info {
+    width: 100%;
+    max-width: 100%;
+    transform: none;
+  }
+
   .shell[data-info-open="true"] .chat {
-    transform: translateX(-20%);
+    transform: translateX(-100%);
+    visibility: hidden;
   }
 }

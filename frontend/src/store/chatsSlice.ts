@@ -38,7 +38,14 @@ export function chatsReducer(state: ChatsState, action: ChatsAction): ChatsState
     case "chats/removed": {
       const byId = { ...state.byId };
       delete byId[action.chatId];
-      return { ...state, byId, order: state.order.filter((id) => id !== action.chatId) };
+      const lastMessage = { ...state.lastMessage };
+      delete lastMessage[action.chatId];
+      return {
+        ...state,
+        byId,
+        order: state.order.filter((id) => id !== action.chatId),
+        lastMessage,
+      };
     }
     case "chats/lastMessage":
       return { ...state, lastMessage: { ...state.lastMessage, [action.chatId]: action.message } };

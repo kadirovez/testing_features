@@ -1,9 +1,10 @@
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, UsersRound } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { SIDEBAR_VIEWS } from "../../registries/sidebarViews";
+import { CreateGroupModal } from "./CreateGroupModal";
 import { Dropdown, DropdownItem } from "../shared/Dropdown";
 import { IconButton } from "../shared/IconButton";
 
@@ -12,9 +13,11 @@ export function HamburgerMenu() {
   const { t } = useLocale();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
   return (
+    <>
     <Dropdown
       open={open}
       onClose={close}
@@ -35,7 +38,17 @@ export function HamburgerMenu() {
           }}
         />
       ))}
+      <DropdownItem
+        icon={<UsersRound size={18} strokeWidth={1.75} />}
+        label={t("menu.createGroup")}
+        onSelect={() => {
+          close();
+          setGroupModalOpen(true);
+        }}
+      />
       <DropdownItem icon={<LogOut size={18} strokeWidth={1.75} />} label={t("menu.logout")} danger onSelect={() => void logout()} />
     </Dropdown>
+    <CreateGroupModal open={groupModalOpen} onClose={() => setGroupModalOpen(false)} />
+    </>
   );
 }

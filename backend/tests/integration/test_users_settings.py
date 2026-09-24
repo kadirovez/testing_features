@@ -1,5 +1,33 @@
 from tests.integration.conftest import Account
 
+_TINY_PNG = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde"
+    b"\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+async def _upload_chat_wallpaper(account: Account) -> str:
+    reserved = await account.post(
+        "/media/uploads",
+        json={
+            "kind": "photo",
+            "purpose": "chat_wallpaper",
+            "mime_type": "image/png",
+            "size_bytes": len(_TINY_PNG),
+        },
+    )
+    assert reserved.status_code == 201, reserved.text
+    media_id = reserved.json()["media"]["id"]
+    uploaded = await account.client.put(
+        f"/media/{media_id}/content",
+        headers={**account.headers, "Content-Type": "image/png"},
+        content=_TINY_PNG,
+    )
+    assert uploaded.status_code == 204, uploaded.text
+    completed = await account.post(f"/media/{media_id}/complete")
+    assert completed.status_code == 200, completed.text
+    return media_id
+
 
 def _code(response) -> str:
     return response.json()["detail"]["code"]
@@ -57,10 +85,33 @@ async def test_settings_defaults_and_updates(alice: Account) -> None:
 
     theme = await alice.put("/settings/theme", json={"theme": {"primary": "#123456", "dark": True}})
     assert theme.json()["theme"] == {"primary": "#123456", "dark": True}
+    wallpaper = await alice.put(
+        "/settings/theme",
+        json={"theme": {"mode": "light", "chatWallpaper": {"kind": "preset", "presetId": "dots"}}},
+    )
+    assert wallpaper.json()["theme"]["chatWallpaper"]["presetId"] == "dots"
+    assert _code(
+        await alice.put("/settings/theme", json={"theme": {"chatWallpaper": {"kind": "preset", "presetId": "nope"}}})
+    ) == "invalid_theme_config"
     too_deep = await alice.put("/settings/theme", json={"theme": {"a": {"b": {"c": {"d": {"e": {"f": 1}}}}}}})
     assert _code(too_deep) == "invalid_theme_config"
     too_large = await alice.put("/settings/theme", json={"theme": {"blob": "x" * 20000}})
     assert _code(too_large) == "theme_config_too_large"
+
+
+async def test_custom_chat_wallpaper_theme_persists(alice: Account) -> None:
+    media_id = await _upload_chat_wallpaper(alice)
+    saved = await alice.put(
+        "/settings/theme",
+        json={"theme": {"chatWallpaper": {"kind": "custom", "mediaId": media_id}}},
+    )
+    assert saved.status_code == 200, saved.text
+    wallpaper = saved.json()["theme"]["chatWallpaper"]
+    assert wallpaper == {"kind": "custom", "mediaId": media_id}
+    assert isinstance(wallpaper["mediaId"], str)
+
+    reloaded = (await alice.get("/settings")).json()["theme"]["chatWallpaper"]
+    assert reloaded == wallpaper
 
 
 async def test_last_seen_visibility(alice: Account, bob: Account) -> None:

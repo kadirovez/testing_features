@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, insert, select, tuple_, update
+from sqlalchemy import delete, func, insert, or_, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.chats.models import ChatMember
 from app.modules.messages.models import DeliveryStatus, Message, MessageAttachment, MessageStatus
 
 
@@ -33,6 +34,11 @@ async def get_by_client_id(db: AsyncSession, sender_id: UUID, client_message_id:
     return result.scalar_one_or_none()
 
 
+async def delete_all_in_chat(db: AsyncSession, chat_id: UUID) -> None:
+    """Hard-delete every message in a chat (statuses and attachments cascade)."""
+    await db.execute(delete(Message).where(Message.chat_id == chat_id))
+
+
 async def update_message(db: AsyncSession, message_id: UUID, values: dict[str, Any]) -> Message:
     """Update message columns and return the refreshed row."""
     await db.execute(update(Message).where(Message.id == message_id).values(**values))
@@ -43,10 +49,17 @@ async def update_message(db: AsyncSession, message_id: UUID, values: dict[str, A
 
 
 async def list_messages(
-    db: AsyncSession, chat_id: UUID, before: tuple[datetime, UUID] | None, limit: int
+    db: AsyncSession,
+    chat_id: UUID,
+    before: tuple[datetime, UUID] | None,
+    limit: int,
+    *,
+    visible_after: datetime | None = None,
 ) -> list[Message]:
     """List chat messages newest first, keyset-paginated by (created_at, id)."""
     stmt = select(Message).where(Message.chat_id == chat_id)
+    if visible_after is not None:
+        stmt = stmt.where(Message.created_at > visible_after)
     if before is not None:
         stmt = stmt.where(tuple_(Message.created_at, Message.id) < tuple_(before[0], before[1]))
     stmt = stmt.order_by(Message.created_at.desc(), Message.id.desc()).limit(limit)
@@ -174,11 +187,17 @@ async def count_unread_by_chats(db: AsyncSession, user_id: UUID, chat_ids: Seque
     result = await db.execute(
         select(MessageStatus.chat_id, func.count())
         .join(Message, Message.id == MessageStatus.message_id)
+        .join(
+            ChatMember,
+            (ChatMember.chat_id == MessageStatus.chat_id) & (ChatMember.user_id == user_id),
+        )
         .where(
             MessageStatus.user_id == user_id,
             MessageStatus.chat_id.in_(chat_ids),
             MessageStatus.status != DeliveryStatus.READ,
             Message.deleted_at.is_(None),
+            ChatMember.left_at.is_(None),
+            or_(ChatMember.history_cleared_at.is_(None), Message.created_at > ChatMember.history_cleared_at),
         )
         .group_by(MessageStatus.chat_id)
     )

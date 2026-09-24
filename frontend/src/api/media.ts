@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { http } from "./client";
+import { http, uploadBinary } from "./client";
 import type { DownloadUrlRead, MediaKind, MediaPurpose, MediaRead, MediaVariant, UploadRead, UUID } from "./types";
 
 async function uploadToStorage(upload: UploadRead, file: File): Promise<void> {
@@ -33,10 +33,12 @@ export const mediaApi = {
 
   complete: (mediaId: UUID) => http.post<MediaRead>(`/media/${mediaId}/complete`),
 
-  /** Presigned upload flow: reserve -> upload to object storage -> confirm. */
+  putContent: (mediaId: UUID, file: File) => uploadBinary(`/media/${mediaId}/content`, file),
+
+  /** Reserve -> upload via API (user-owned object in storage) -> confirm. */
   async upload(file: File, purpose: MediaPurpose): Promise<MediaRead> {
     const reserved = await mediaApi.reserve(file, purpose);
-    if (!config.useMocks) await uploadToStorage(reserved, file);
+    if (!config.useMocks) await mediaApi.putContent(reserved.media.id, file);
     return mediaApi.complete(reserved.media.id);
   },
 };
