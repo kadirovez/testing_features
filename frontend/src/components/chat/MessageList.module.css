@@ -1,0 +1,27 @@
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .column {
+    padding: var(--space-2) var(--space-2) var(--space-1);
+  }
+}

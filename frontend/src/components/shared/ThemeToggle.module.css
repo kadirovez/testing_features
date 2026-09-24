@@ -1,0 +1,54 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: var(--surface-2);
+  }
+}
+
+.icon {
+  color: var(--text-2);
+}
+
+.label {
+  flex: 1;
+}
+
+.track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--badge-muted);
+  transition: background-color var(--dur) var(--ease);
+}
+
+.thumb {
+  position: absolute;
+  top: var(--space-0);
+  left: var(--space-0);
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: #fff;
+  box-shadow: var(--elev-1);
+  transition: transform var(--dur) var(--ease);
+}
+
+.on {
+  background: var(--accent);
+}
+
+.on .thumb {
+  transform: translateX(16px);
+}

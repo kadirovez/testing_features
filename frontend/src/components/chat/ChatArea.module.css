@@ -1,0 +1,23 @@
+.area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--chat-bg);
+  isolation: isolate;
+}
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--chat-bg-image);
+  background-size: var(--chat-bg-size, 240px);
+  background-position: var(--chat-bg-position, top left);
+  background-repeat: var(--chat-bg-repeat, repeat);
+  opacity: var(--chat-pattern-opacity);
+  filter: var(--chat-wallpaper-filter, none);
+  transition:
+    opacity var(--dur) var(--ease),
+    filter var(--dur) var(--ease);
+}

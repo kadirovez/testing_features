@@ -1,0 +1,43 @@
+:root {
+  --font-sans: "Golos Text", "Segoe UI", sans-serif;
+
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 999px;
+
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 15px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --dur-slow: 250ms;
+
+  --sidebar-w: 340px;
+  --info-w: 320px;
+  --header-h: 56px;
+  --touch: 44px;
+  --icon: 20px;
+
+  /* Swap for a real wallpaper: url("/wallpapers/my.jpg") */
+  --chat-bg-image: url("/chat-bg-pattern.svg");
+}
+
+@media (max-width: 1099px) {
+  :root {
+    --sidebar-w: 300px;
+  }
+}
