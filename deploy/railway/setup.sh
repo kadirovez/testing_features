@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# One-time Railway project wiring (run locally after `npx @railway/cli login`).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+CLI=(npx --yes @railway/cli)
+
+echo "==> Railway setup for messenger (repo: testing_features)"
+echo "    Create a new project in the dashboard or run: railway init"
+echo ""
+echo "Add plugins in Railway:"
+echo "  - PostgreSQL"
+echo "  - Redis"
+echo ""
+echo "Create services from this GitHub repo (branch: front_tests or main):"
+echo ""
+echo "1) api"
+echo "   Root directory: backend"
+echo "   Config file (env RAILWAY_CONFIG_FILE): railway.toml"
+echo ""
+echo "2) worker"
+echo "   Root directory: backend"
+echo "   Variable: RAILWAY_CONFIG_FILE=railway.worker.toml"
+echo ""
+echo "3) web"
+echo "   Root directory: frontend"
+echo "   Variable: API_UPSTREAM=http://\${{api.RAILWAY_PRIVATE_DOMAIN}}"
+echo "   Generate domain for public access"
+echo ""
+echo "4) minio"
+echo "   Root directory: deploy/minio"
+echo "   Mount volume at /data (Railway UI → service → Volumes)"
+echo "   Variables: MINIO_ROOT_USER, MINIO_ROOT_PASSWORD"
+echo "   Generate public domain (port 9000) for browser uploads"
+echo ""
+echo "API service variables (reference names must match your service names):"
+cat <<'VARS'
+JWT_SECRET=<openssl rand -hex 32>
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+CELERY_BROKER_URL=${{Redis.REDIS_URL}}/1
+CELERY_RESULT_BACKEND=${{Redis.REDIS_URL}}/2
+CORS_ORIGINS=["https://${{web.RAILWAY_PUBLIC_DOMAIN}}"]
+S3_ENDPOINT_URL=http://${{minio.RAILWAY_PRIVATE_DOMAIN}}
+S3_PUBLIC_ENDPOINT_URL=https://${{minio.RAILWAY_PUBLIC_DOMAIN}}
+S3_ACCESS_KEY=<same as MINIO_ROOT_USER>
+S3_SECRET_KEY=<same as MINIO_ROOT_PASSWORD>
+S3_BUCKET=messenger-media
+LOG_JSON=true
+VARS
+echo ""
+echo "Link CLI to project (from repo root):"
+echo "  cd \"$ROOT\" && ${CLI[*]} link"
+echo "Deploy current branch:"
+echo "  ${CLI[*]} up"
