@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core import storage
 from app.core.config import settings
 from app.core.database import SessionFactory, engine
+from app.core.frontend_static import api_route_prefix, mount_frontend
 from app.core.exceptions import register_exception_handlers
 from app.core.i18n.middleware import LocaleMiddleware
 from app.core.logging import RequestIdMiddleware, configure_logging
@@ -66,17 +67,20 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
 
-    app.include_router(auth_router)
-    app.include_router(users_router)
-    app.include_router(settings_router)
-    app.include_router(chats_router)
-    app.include_router(messages_router)
-    app.include_router(media_router)
+    api_prefix = api_route_prefix()
+    app.include_router(auth_router, prefix=api_prefix)
+    app.include_router(users_router, prefix=api_prefix)
+    app.include_router(settings_router, prefix=api_prefix)
+    app.include_router(chats_router, prefix=api_prefix)
+    app.include_router(messages_router, prefix=api_prefix)
+    app.include_router(media_router, prefix=api_prefix)
     app.include_router(realtime_router)
 
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    mount_frontend(app)
 
     return app
 
