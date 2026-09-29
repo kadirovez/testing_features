@@ -9,6 +9,11 @@ on:
       - "backend/**"
       - "frontend/**"
       - "deploy/**"
+      - "Dockerfile"
+      - "Dockerfile.web"
+      - "Dockerfile.minio"
+      - "railway.toml"
+      - "railway.*.toml"
       - ".github/workflows/railway-deploy.yml"
 
 jobs:
