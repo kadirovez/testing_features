@@ -1,4 +1,6 @@
+import os
 from functools import lru_cache
+from urllib.parse import quote_plus
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,6 +14,61 @@ def _to_asyncpg_url(url: str) -> str:
     if url.startswith("postgres://"):
         return "postgresql+asyncpg://" + url.removeprefix("postgres://")
     return url
+
+
+def _database_url_from_pg_env() -> str | None:
+    host = os.environ.get("PGHOST") or os.environ.get("POSTGRES_HOST")
+    user = os.environ.get("PGUSER") or os.environ.get("POSTGRES_USER")
+    password = os.environ.get("PGPASSWORD") or os.environ.get("POSTGRES_PASSWORD")
+    database = os.environ.get("PGDATABASE") or os.environ.get("POSTGRES_DB")
+    port = os.environ.get("PGPORT") or os.environ.get("POSTGRES_PORT") or "5432"
+    if not all([host, user, password, database]):
+        return None
+    return (
+        f"postgresql+asyncpg://{quote_plus(user)}:{quote_plus(password)}"
+        f"@{host}:{port}/{quote_plus(database)}"
+    )
+
+
+def _looks_like_postgres_url(url: str) -> bool:
+    return url.startswith("postgresql+asyncpg://") and "@" in url and "://" in url
+
+
+LOCAL_DATABASE_URL = "postgresql+asyncpg://messenger:messenger@localhost:5432/messenger"
+
+
+def _coerce_database_url(value: object) -> str:
+    candidates: list[str] = []
+    if isinstance(value, str):
+        stripped = value.strip().strip('"').strip("'")
+        if stripped and stripped != LOCAL_DATABASE_URL:
+            candidates.append(stripped)
+    for key in ("DATABASE_URL", "DATABASE_PRIVATE_URL", "DATABASE_PUBLIC_URL"):
+        env_val = os.environ.get(key, "").strip()
+        if env_val and env_val not in candidates:
+            candidates.append(env_val)
+
+    for raw in candidates:
+        if "${{" in raw:
+            continue
+        coerced = _to_asyncpg_url(raw)
+        if _looks_like_postgres_url(coerced):
+            return coerced
+
+    built = _database_url_from_pg_env()
+    if built is not None:
+        return built
+
+    if any("${{" in item for item in candidates):
+        raise ValueError(
+            "DATABASE_URL contains an unresolved Railway reference (${{...}}). "
+            "In Railway open api → Variables → Add Variable Reference → Postgres → DATABASE_URL."
+        )
+
+    raise ValueError(
+        "DATABASE_URL is missing or not a valid Postgres URL. "
+        "Link the Postgres plugin to the api service or add a DATABASE_URL variable reference."
+    )
 
 
 class Settings(BaseSettings):
@@ -79,9 +136,7 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def normalize_database_url(cls, value: object) -> object:
-        if isinstance(value, str):
-            return _to_asyncpg_url(value)
-        return value
+        return _coerce_database_url(value)
 
     @model_validator(mode="after")
     def validate_jwt_secret(self) -> "Settings":
