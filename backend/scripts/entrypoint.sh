@@ -2,12 +2,16 @@
 set -eu
 
 missing=""
-for name in JWT_SECRET REDIS_URL; do
+for name in JWT_SECRET; do
   eval "value=\${$name:-}"
   if [ -z "$value" ]; then
     missing="${missing} ${name}"
   fi
 done
+
+if [ -z "${REDIS_URL:-}" ] && [ -z "${REDISHOST:-}" ]; then
+  missing="${missing} REDIS_URL"
+fi
 
 if [ -z "${DATABASE_URL:-}" ] && [ -z "${PGHOST:-}" ]; then
   missing="${missing} DATABASE_URL"
@@ -36,6 +40,13 @@ if [ -n "${DATABASE_URL:-}" ] && printf '%s' "$DATABASE_URL" | grep -q '{{'; the
   exit 1
 fi
 
+if [ -n "${REDIS_URL:-}" ] && printf '%s' "$REDIS_URL" | grep -q '{{'; then
+  echo "ERROR: REDIS_URL looks like an unresolved Railway template (contains '{{')."
+  echo "Use Variables → Add Variable Reference → Redis → REDIS_URL"
+  exit 1
+fi
+
 echo "DB config: DATABASE_URL=$([ -n "${DATABASE_URL:-}" ] && echo set || echo unset) PGHOST=${PGHOST:-unset}"
+echo "Redis config: REDIS_URL=$([ -n "${REDIS_URL:-}" ] && echo set || echo unset) REDISHOST=${REDISHOST:-unset}"
 
 exec "$@"

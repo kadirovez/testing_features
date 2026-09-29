@@ -42,8 +42,8 @@ JWT_SECRET=<openssl rand -hex 32>   # required, min 32 chars
 # In Railway UI: Variables → Add Variable Reference (do not paste ${{...}} as plain text)
 DATABASE_URL=<reference Postgres DATABASE_URL>
 REDIS_URL=<reference Redis REDIS_URL>
-CELERY_BROKER_URL=<reference Redis REDIS_URL>/1
-CELERY_RESULT_BACKEND=<reference Redis REDIS_URL>/2
+# Celery DB indexes are applied automatically; you do not need to set these on Railway:
+# CELERY_BROKER_URL=/1 CELERY_RESULT_BACKEND=/2
 CORS_ORIGINS=["https://${{web.RAILWAY_PUBLIC_DOMAIN}}"]
 S3_ENDPOINT_URL=http://${{minio.RAILWAY_PRIVATE_DOMAIN}}
 S3_PUBLIC_ENDPOINT_URL=https://${{minio.RAILWAY_PUBLIC_DOMAIN}}
