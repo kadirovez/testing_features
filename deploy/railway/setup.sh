@@ -36,9 +36,9 @@ echo "   Mount volume at /data (Railway UI → service → Volumes)"
 echo "   Variables: MINIO_ROOT_USER, MINIO_ROOT_PASSWORD"
 echo "   Generate public domain (port 9000) for browser uploads"
 echo ""
-echo "API service variables (reference names must match your service names):"
+echo "API + worker service variables (REQUIRED — deploy fails without JWT_SECRET):"
 cat <<'VARS'
-JWT_SECRET=<openssl rand -hex 32>
+JWT_SECRET=<openssl rand -hex 32>   # required, min 32 chars
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 REDIS_URL=${{Redis.REDIS_URL}}
 CELERY_BROKER_URL=${{Redis.REDIS_URL}}/1

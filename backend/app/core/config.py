@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -82,6 +82,16 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return _to_asyncpg_url(value)
         return value
+
+    @model_validator(mode="after")
+    def validate_jwt_secret(self) -> "Settings":
+        if len(self.JWT_SECRET) < 32:
+            msg = (
+                "JWT_SECRET must be at least 32 characters. "
+                "On Railway: api service → Variables → JWT_SECRET (e.g. openssl rand -hex 32)."
+            )
+            raise ValueError(msg)
+        return self
 
 
 @lru_cache
