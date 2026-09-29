@@ -30,4 +30,12 @@ if [ "${#JWT_SECRET}" -lt 32 ]; then
   exit 1
 fi
 
+if [ -n "${DATABASE_URL:-}" ] && printf '%s' "$DATABASE_URL" | grep -q '{{'; then
+  echo "ERROR: DATABASE_URL looks like an unresolved Railway template (contains '{{')."
+  echo "Use Variables → Add Variable Reference → Postgres → DATABASE_URL"
+  exit 1
+fi
+
+echo "DB config: DATABASE_URL=$([ -n "${DATABASE_URL:-}" ] && echo set || echo unset) PGHOST=${PGHOST:-unset}"
+
 exec "$@"

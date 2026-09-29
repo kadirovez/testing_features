@@ -4,6 +4,7 @@ from urllib.parse import quote_plus
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine.url import make_url
 
 
 def _to_asyncpg_url(url: str) -> str:
@@ -30,44 +31,66 @@ def _database_url_from_pg_env() -> str | None:
     )
 
 
-def _looks_like_postgres_url(url: str) -> bool:
-    return url.startswith("postgresql+asyncpg://") and "@" in url and "://" in url
-
-
 LOCAL_DATABASE_URL = "postgresql+asyncpg://messenger:messenger@localhost:5432/messenger"
+
+
+def _sanitize_url_string(raw: str) -> str:
+    return raw.strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+
+
+def _try_postgres_url(raw: str) -> str | None:
+    cleaned = _sanitize_url_string(raw)
+    if not cleaned or "${{" in cleaned or "{{" in cleaned:
+        return None
+    coerced = _to_asyncpg_url(cleaned)
+    if not coerced.startswith("postgresql+asyncpg://"):
+        return None
+    try:
+        make_url(coerced)
+    except Exception:
+        return None
+    return coerced
 
 
 def _coerce_database_url(value: object) -> str:
     candidates: list[str] = []
-    if isinstance(value, str):
-        stripped = value.strip().strip('"').strip("'")
-        if stripped and stripped != LOCAL_DATABASE_URL:
-            candidates.append(stripped)
-    for key in ("DATABASE_URL", "DATABASE_PRIVATE_URL", "DATABASE_PUBLIC_URL"):
+    for key in ("DATABASE_PRIVATE_URL", "DATABASE_URL", "DATABASE_PUBLIC_URL"):
         env_val = os.environ.get(key, "").strip()
-        if env_val and env_val not in candidates:
+        if env_val:
             candidates.append(env_val)
+    if isinstance(value, str):
+        stripped = _sanitize_url_string(value)
+        if stripped and stripped not in candidates and stripped != LOCAL_DATABASE_URL:
+            candidates.append(stripped)
 
     for raw in candidates:
-        if "${{" in raw:
-            continue
-        coerced = _to_asyncpg_url(raw)
-        if _looks_like_postgres_url(coerced):
-            return coerced
+        parsed = _try_postgres_url(raw)
+        if parsed is not None:
+            return parsed
 
     built = _database_url_from_pg_env()
     if built is not None:
-        return built
+        parsed = _try_postgres_url(built)
+        if parsed is not None:
+            return parsed
 
-    if any("${{" in item for item in candidates):
+    on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+    if any("${{" in item or "{{" in item for item in candidates):
         raise ValueError(
-            "DATABASE_URL contains an unresolved Railway reference (${{...}}). "
-            "In Railway open api → Variables → Add Variable Reference → Postgres → DATABASE_URL."
+            "DATABASE_URL contains an unresolved Railway reference. "
+            "api → Variables → Add Variable Reference → Postgres → DATABASE_URL "
+            "(or Connect Postgres to this service)."
+        )
+    if on_railway:
+        raise ValueError(
+            "DATABASE_URL is missing or invalid on Railway. "
+            "Connect the Postgres plugin to the api service, then add a DATABASE_URL "
+            "variable reference from Postgres."
         )
 
     raise ValueError(
         "DATABASE_URL is missing or not a valid Postgres URL. "
-        "Link the Postgres plugin to the api service or add a DATABASE_URL variable reference."
+        "Set DATABASE_URL or PGHOST/PGUSER/PGPASSWORD/PGDATABASE."
     )
 
 
@@ -139,13 +162,24 @@ class Settings(BaseSettings):
         return _coerce_database_url(value)
 
     @model_validator(mode="after")
-    def validate_jwt_secret(self) -> "Settings":
+    def validate_runtime_secrets(self) -> "Settings":
         if len(self.JWT_SECRET) < 32:
             msg = (
                 "JWT_SECRET must be at least 32 characters. "
                 "On Railway: api service → Variables → JWT_SECRET (e.g. openssl rand -hex 32)."
             )
             raise ValueError(msg)
+
+        on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+        if on_railway and self.DATABASE_URL == LOCAL_DATABASE_URL:
+            raise ValueError(
+                "DATABASE_URL still points to localhost on Railway. "
+                "Connect Postgres to the api service and add a DATABASE_URL reference."
+            )
+        try:
+            make_url(self.DATABASE_URL)
+        except Exception as exc:
+            raise ValueError(f"DATABASE_URL is not a valid SQLAlchemy URL: {exc}") from exc
         return self
 
 
