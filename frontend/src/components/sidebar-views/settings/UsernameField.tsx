@@ -4,8 +4,10 @@ import { ApiError } from "../../../api/client";
 import { usersApi } from "../../../api/users";
 import { useLocale } from "../../../context/LocaleContext";
 import { useStore } from "../../../context/StoreContext";
-import { cx } from "../../../utils/cx";
-import styles from "./settings.module.css";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const MAX_LENGTH = 32;
 const USERNAME_RE = /^[A-Za-z0-9_]{3,32}$/;
@@ -42,23 +44,29 @@ export function UsernameField() {
   };
 
   return (
-    <form className={styles.field} onSubmit={(e) => void onSubmit(e)}>
-      <label className={styles.inputWrap}>
-        <span className={styles.floatLabel}>{t("settings.username")}</span>
-        <input
-          className={styles.input}
+    <form className="flex flex-col gap-1.5" onSubmit={(e) => void onSubmit(e)}>
+      <Label htmlFor="settings-username">{t("settings.username")}</Label>
+      <div className="flex gap-2">
+        <Input
+          id="settings-username"
           value={value}
           maxLength={MAX_LENGTH}
           autoComplete="username"
           spellCheck={false}
+          aria-invalid={Boolean(error) || undefined}
+          aria-describedby="settings-username-hint"
           onChange={(e) => setValue(e.target.value.replace(/^@+/, ""))}
         />
-      </label>
-      <span className={cx(styles.hint, error && styles.error)}>{error ?? t("settings.usernameHint")}</span>
-      <button type="submit" className={cx(styles.save, (dirty || saved) && styles.saveVisible)} disabled={!dirty}>
-        {saved ? <Check size={18} strokeWidth={2} /> : null}
-        {saved ? t("common.saved") : t("common.save")}
-      </button>
+        {(dirty || saved) && (
+          <Button type="submit" className="animate-in fade-in-0 zoom-in-95 duration-150" disabled={!dirty}>
+            {saved && <Check strokeWidth={2} />}
+            {saved ? t("common.saved") : t("common.save")}
+          </Button>
+        )}
+      </div>
+      <span id="settings-username-hint" className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>
+        {error ?? t("settings.usernameHint")}
+      </span>
     </form>
   );
 }

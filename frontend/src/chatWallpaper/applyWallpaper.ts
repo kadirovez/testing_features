@@ -1,37 +1,38 @@
+import type { CSSProperties } from "react";
 import type { ThemeMode } from "../context/ThemeContext";
 import type { ChatWallpaperConfig } from "./presets";
-import { getWallpaperPreset } from "./presets";
+import { getWallpaperPreset, isNeutralWallpaperPreset } from "./presets";
 
-const DARK_PRESET_FILTER = "brightness(1.65) contrast(1.12)";
-const DARK_PRESET_OPACITY = "0.38";
+const DARK_PRESET_FILTER = "invert(1)";
+const DARK_PATTERN_OPACITY = 0.28;
+const LIGHT_PATTERN_OPACITY = 1;
 
-export function applyChatWallpaperToDocument(
+/** Inline styles for the tiled/cover pattern layer over `bg-chat`. */
+export function getChatWallpaperPatternStyle(
   wallpaper: ChatWallpaperConfig,
   customUrl: string | null,
   theme: ThemeMode,
-): void {
-  const root = document.documentElement;
+): CSSProperties | undefined {
   if (wallpaper.kind === "custom") {
-    if (!customUrl) return;
-    root.style.setProperty("--chat-bg-image", `url("${customUrl}")`);
-    root.style.setProperty("--chat-bg-size", "cover");
-    root.style.setProperty("--chat-bg-position", "center");
-    root.style.setProperty("--chat-pattern-opacity", "1");
-    root.style.setProperty("--chat-bg-repeat", "no-repeat");
-    root.style.setProperty("--chat-wallpaper-filter", "none");
-    return;
+    if (!customUrl) return undefined;
+    return {
+      backgroundImage: `url("${customUrl}")`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      opacity: 1,
+    };
   }
 
   const preset = getWallpaperPreset(wallpaper.presetId);
-  root.style.setProperty("--chat-bg-image", `url("${preset.src}")`);
-  root.style.setProperty("--chat-bg-size", preset.tiled ? preset.tileSize : "cover");
-  root.style.setProperty("--chat-bg-position", preset.tiled ? "top left" : "center");
-  root.style.setProperty("--chat-bg-repeat", preset.tiled ? "repeat" : "no-repeat");
-  if (theme === "dark") {
-    root.style.setProperty("--chat-pattern-opacity", DARK_PRESET_OPACITY);
-    root.style.setProperty("--chat-wallpaper-filter", DARK_PRESET_FILTER);
-  } else {
-    root.style.removeProperty("--chat-pattern-opacity");
-    root.style.setProperty("--chat-wallpaper-filter", "none");
-  }
+  if (isNeutralWallpaperPreset(preset) || !preset.src) return undefined;
+
+  return {
+    backgroundImage: `url("${preset.src}")`,
+    backgroundSize: preset.tiled ? preset.tileSize : "cover",
+    backgroundPosition: preset.tiled ? "top left" : "center",
+    backgroundRepeat: preset.tiled ? "repeat" : "no-repeat",
+    opacity: theme === "dark" ? DARK_PATTERN_OPACITY : LIGHT_PATTERN_OPACITY,
+    filter: theme === "dark" ? DARK_PRESET_FILTER : undefined,
+  };
 }

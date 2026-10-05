@@ -11,7 +11,9 @@ export interface ChatWallpaperConfig {
 export interface WallpaperPreset {
   id: WallpaperPresetId;
   labelKey: TranslationKey;
-  src: string;
+  /** Solid chat background (no pattern); id stays `classic` for API compatibility. */
+  neutral?: boolean;
+  src?: string;
   tileSize: string;
   tiled: boolean;
 }
@@ -19,7 +21,7 @@ export interface WallpaperPreset {
 export const DEFAULT_WALLPAPER_PRESET_ID: WallpaperPresetId = "classic";
 
 export const WALLPAPER_PRESETS: WallpaperPreset[] = [
-  { id: "classic", labelKey: "settings.wallpaper.classic", src: "/chat-bg-pattern.svg", tileSize: "240px", tiled: true },
+  { id: "classic", labelKey: "settings.wallpaper.neutral", neutral: true, tileSize: "0", tiled: false },
   { id: "dots", labelKey: "settings.wallpaper.dots", src: "/wallpapers/dots.svg", tileSize: "48px", tiled: true },
   { id: "grid", labelKey: "settings.wallpaper.grid", src: "/wallpapers/grid.svg", tileSize: "64px", tiled: true },
   { id: "diagonal", labelKey: "settings.wallpaper.diagonal", src: "/wallpapers/diagonal.svg", tileSize: "56px", tiled: true },
@@ -32,6 +34,10 @@ const presetById = new Map(WALLPAPER_PRESETS.map((preset) => [preset.id, preset]
 
 export function getWallpaperPreset(id: WallpaperPresetId | undefined): WallpaperPreset {
   return presetById.get(id ?? DEFAULT_WALLPAPER_PRESET_ID) ?? WALLPAPER_PRESETS[0];
+}
+
+export function isNeutralWallpaperPreset(preset: WallpaperPreset): boolean {
+  return preset.neutral === true;
 }
 
 export function defaultChatWallpaper(): ChatWallpaperConfig {

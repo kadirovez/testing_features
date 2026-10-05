@@ -5,9 +5,10 @@ import {
   useEffect,
   useMemo,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
-import { applyChatWallpaperToDocument } from "../chatWallpaper/applyWallpaper";
+import { getChatWallpaperPatternStyle } from "../chatWallpaper/applyWallpaper";
 import type { ChatWallpaperConfig } from "../chatWallpaper/presets";
 import { parseChatWallpaper, type WallpaperPresetId } from "../chatWallpaper/presets";
 import { useMediaUrl } from "../hooks/useMediaUrl";
@@ -26,6 +27,7 @@ import { useTheme } from "./ThemeContext";
 
 interface ChatAppearanceValue {
   chatWallpaper: ChatWallpaperConfig;
+  chatWallpaperPatternStyle: CSSProperties | undefined;
   accentPreset: AccentPresetId;
   serverTheme: Record<string, unknown>;
   hydrated: boolean;
@@ -50,9 +52,10 @@ export function ChatAppearanceProvider({ children }: { children: ReactNode }) {
     "original",
   );
 
-  useEffect(() => {
-    applyChatWallpaperToDocument(chatWallpaper, customUrl, theme);
-  }, [chatWallpaper, customUrl, theme]);
+  const chatWallpaperPatternStyle = useMemo(
+    () => getChatWallpaperPatternStyle(chatWallpaper, customUrl, theme),
+    [chatWallpaper, customUrl, theme],
+  );
 
   useEffect(() => {
     applyAccentPresetToDocument(accentPreset);
@@ -92,6 +95,7 @@ export function ChatAppearanceProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       chatWallpaper,
+      chatWallpaperPatternStyle,
       accentPreset,
       serverTheme,
       hydrated,
@@ -104,6 +108,7 @@ export function ChatAppearanceProvider({ children }: { children: ReactNode }) {
     }),
     [
       chatWallpaper,
+      chatWallpaperPatternStyle,
       accentPreset,
       serverTheme,
       hydrated,

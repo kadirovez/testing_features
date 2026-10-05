@@ -1,12 +1,26 @@
 import { useState } from "react";
 import type { UUID } from "../../api/types";
 import { useMediaUrl } from "../../hooks/useMediaUrl";
+import { cn } from "@/lib/utils";
+import { Avatar as AvatarRoot, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { avatarColor, initials } from "../../utils/avatarColor";
-import { cx } from "../../utils/cx";
 import { AvatarPreviewModal } from "./AvatarPreviewModal";
-import styles from "./Avatar.module.css";
 
 export type AvatarSize = "sm" | "md" | "lg" | "xl";
+
+const SIZE_CLASS: Record<AvatarSize, string> = {
+  sm: "size-8 text-xs",
+  md: "size-10 text-sm",
+  lg: "size-14 text-base",
+  xl: "size-28 text-4xl font-medium",
+};
+
+const DOT_CLASS: Record<AvatarSize, string> = {
+  sm: "size-2.5",
+  md: "size-3",
+  lg: "size-3.5",
+  xl: "size-5 right-1.5 bottom-1.5",
+};
 
 interface AvatarProps {
   name: string;
@@ -37,16 +51,31 @@ export function Avatar({
   const canPreview = previewOnClick && Boolean(previewUrl);
 
   const body = (
-    <span className={cx(styles.avatar, styles[size], className)} style={{ backgroundColor: avatarColor(seed) }}>
-      {displayUrl ? <img className={styles.image} src={displayUrl} alt="" draggable={false} /> : initials(name)}
-      {online && <span className={styles.online} aria-hidden />}
+    <span className={cn("relative inline-flex shrink-0 select-none", className)}>
+      <AvatarRoot className={SIZE_CLASS[size]}>
+        {displayUrl && <AvatarImage src={displayUrl} alt="" draggable={false} />}
+        <AvatarFallback className="text-white tracking-wide" style={{ backgroundColor: avatarColor(seed) }}>
+          {initials(name)}
+        </AvatarFallback>
+      </AvatarRoot>
+      {online && (
+        <span
+          className={cn("absolute right-0 bottom-0 rounded-full bg-online ring-2 ring-card", DOT_CLASS[size])}
+          aria-hidden
+        />
+      )}
     </span>
   );
 
   return (
     <>
       {canPreview ? (
-        <button type="button" className={styles.hitTarget} onClick={() => setPreviewOpen(true)}>
+        <button
+          type="button"
+          className="shrink-0 cursor-zoom-in rounded-full leading-none"
+          aria-label={name}
+          onClick={() => setPreviewOpen(true)}
+        >
           {body}
         </button>
       ) : (

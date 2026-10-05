@@ -1,101 +1,71 @@
-/* UI accent presets — only interface tokens (not surfaces or chat wallpaper). */
+/* shadcn/ui color themes; "blue" id is the default neutral theme. */
 
-[data-theme="light"][data-accent="teal"] {
-  --accent: #0d9488;
-  --accent-hover: #0f766e;
-  --accent-soft: #cce8e6;
-  --bubble-out: #d4f0ed;
-  --bubble-out-text: #134e4a;
-  --check-read: #0d9488;
-  --badge: #0d9488;
+[data-accent="teal"] {
+  --accent: oklch(0.6 0.118 184.704);
+  --on-accent: oklch(0.984 0.014 180.72);
+  --bubble-out: oklch(0.57 0.092 184.704);
+  --bubble-out-text: var(--on-accent);
+}
+
+[data-accent="green"] {
+  --accent: oklch(0.627 0.194 149.214);
+  --on-accent: oklch(0.982 0.018 155.826);
+  --bubble-out: oklch(0.59 0.152 149.214);
+  --bubble-out-text: var(--on-accent);
+}
+
+[data-accent="violet"] {
+  --accent: oklch(0.541 0.281 293.009);
+  --on-accent: oklch(0.969 0.016 293.756);
+  --bubble-out: oklch(0.52 0.218 293.009);
+  --bubble-out-text: var(--on-accent);
+}
+
+[data-accent="rose"] {
+  --accent: oklch(0.586 0.253 17.585);
+  --on-accent: oklch(0.969 0.015 12.422);
+  --bubble-out: oklch(0.56 0.198 17.585);
+  --bubble-out-text: var(--on-accent);
+}
+
+[data-accent="amber"] {
+  --accent: oklch(0.646 0.222 41.116);
+  --on-accent: oklch(0.98 0.016 73.684);
+  --bubble-out: oklch(0.61 0.172 41.116);
+  --bubble-out-text: var(--on-accent);
 }
 
 [data-theme="dark"][data-accent="teal"] {
-  --accent: #14b8a6;
-  --accent-hover: #2dd4bf;
-  --accent-soft: #12332f;
-  --bubble-out: #1a3d38;
-  --bubble-out-text: #ccfbf1;
-  --check-read: #2dd4bf;
-  --badge: #14b8a6;
-}
-
-[data-theme="light"][data-accent="green"] {
-  --accent: #15803d;
-  --accent-hover: #166534;
-  --accent-soft: #cce8d4;
-  --bubble-out: #dcf0e0;
-  --bubble-out-text: #14532d;
-  --check-read: #15803d;
-  --badge: #15803d;
+  --accent: oklch(0.704 0.14 182.503);
+  --on-accent: oklch(0.277 0.046 192.524);
+  --bubble-out: oklch(0.62 0.102 182.503);
+  --bubble-out-text: var(--on-accent);
 }
 
 [data-theme="dark"][data-accent="green"] {
-  --accent: #22c55e;
-  --accent-hover: #4ade80;
-  --accent-soft: #143322;
-  --bubble-out: #1a3d28;
-  --bubble-out-text: #dcfce7;
-  --check-read: #4ade80;
-  --badge: #22c55e;
-}
-
-[data-theme="light"][data-accent="violet"] {
-  --accent: #6d28d9;
-  --accent-hover: #5b21b6;
-  --accent-soft: #ddd6fe;
-  --bubble-out: #ebe4fc;
-  --bubble-out-text: #4c1d95;
-  --check-read: #6d28d9;
-  --badge: #6d28d9;
+  --accent: oklch(0.723 0.219 149.579);
+  --on-accent: oklch(0.266 0.065 152.934);
+  --bubble-out: oklch(0.64 0.168 149.579);
+  --bubble-out-text: var(--on-accent);
 }
 
 [data-theme="dark"][data-accent="violet"] {
-  --accent: #8b5cf6;
-  --accent-hover: #a78bfa;
-  --accent-soft: #2a1f47;
-  --bubble-out: #2d2248;
-  --bubble-out-text: #ede9fe;
-  --check-read: #a78bfa;
-  --badge: #8b5cf6;
-}
-
-[data-theme="light"][data-accent="rose"] {
-  --accent: #be123c;
-  --accent-hover: #9f1239;
-  --accent-soft: #f5d0d8;
-  --bubble-out: #fae8ec;
-  --bubble-out-text: #881337;
-  --check-read: #be123c;
-  --badge: #be123c;
+  --accent: oklch(0.606 0.25 292.717);
+  --on-accent: oklch(0.969 0.016 293.756);
+  --bubble-out: oklch(0.54 0.188 292.717);
+  --bubble-out-text: var(--on-accent);
 }
 
 [data-theme="dark"][data-accent="rose"] {
-  --accent: #f43f5e;
-  --accent-hover: #fb7185;
-  --accent-soft: #3a1a24;
-  --bubble-out: #3d1f2a;
-  --bubble-out-text: #ffe4e6;
-  --check-read: #fb7185;
-  --badge: #f43f5e;
-}
-
-[data-theme="light"][data-accent="amber"] {
-  --accent: #b45309;
-  --accent-hover: #92400e;
-  --accent-soft: #f5e6c8;
-  --bubble-out: #faecd4;
-  --bubble-out-text: #78350f;
-  --check-read: #b45309;
-  --badge: #b45309;
+  --accent: oklch(0.645 0.246 16.439);
+  --on-accent: oklch(0.969 0.015 12.422);
+  --bubble-out: oklch(0.58 0.182 16.439);
+  --bubble-out-text: var(--on-accent);
 }
 
 [data-theme="dark"][data-accent="amber"] {
-  --accent: #f59e0b;
-  --accent-hover: #fbbf24;
-  --accent-soft: #3a2a12;
-  --bubble-out: #3d3018;
-  --bubble-out-text: #fef3c7;
-  --check-read: #fbbf24;
-  --badge: #f59e0b;
+  --accent: oklch(0.705 0.213 47.604);
+  --on-accent: oklch(0.266 0.079 36.259);
+  --bubble-out: oklch(0.62 0.158 47.604);
+  --bubble-out-text: var(--on-accent);
 }

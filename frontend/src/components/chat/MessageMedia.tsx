@@ -2,9 +2,9 @@ import { Loader2, Play } from "lucide-react";
 import { useState } from "react";
 import type { MediaBrief } from "../../api/types";
 import { useMediaUrl } from "../../hooks/useMediaUrl";
+import { cn } from "@/lib/utils";
 import { fitSingleMediaBox, mediaAspectRatio } from "../../utils/mediaLayout";
 import { MediaViewerModal } from "./MediaViewerModal";
-import styles from "./MessageMedia.module.css";
 
 interface MessageMediaProps {
   attachments: MediaBrief[];
@@ -13,10 +13,11 @@ interface MessageMediaProps {
 interface AttachmentProps {
   media: MediaBrief;
   count: number;
+  spanFull: boolean;
   onOpen: (media: MediaBrief) => void;
 }
 
-function Attachment({ media, count, onOpen }: AttachmentProps) {
+function Attachment({ media, count, spanFull, onOpen }: AttachmentProps) {
   const variant = media.has_thumbnail ? "thumbnail" : "original";
   const url = useMediaUrl(media.id, variant, media.status);
   const loading = media.status !== "failed" && !url;
@@ -30,28 +31,40 @@ function Attachment({ media, count, onOpen }: AttachmentProps) {
   return (
     <button
       type="button"
-      className={styles.item}
+      className={cn(
+        "relative block min-h-0 min-w-0 cursor-zoom-in overflow-hidden bg-muted disabled:cursor-default",
+        !isSingle && "max-h-[260px] w-full",
+        spanFull && "col-span-2",
+      )}
       style={
         isSingle && singleSize
           ? { width: singleSize.width, height: singleSize.height }
           : { aspectRatio: mediaAspectRatio(media.width, media.height) }
       }
       disabled={media.kind !== "photo" || !url}
-      aria-label={media.kind === "photo" ? undefined : media.kind}
+      aria-label={media.kind === "photo" ? "photo" : media.kind}
       onClick={(event) => {
         event.stopPropagation();
         onActivate();
       }}
     >
       {loading && (
-        <span className={styles.loader} aria-hidden>
-          <Loader2 size={28} strokeWidth={1.75} className={styles.spin} />
+        <span className="absolute inset-0 grid place-items-center text-subtle" aria-hidden>
+          <Loader2 className="size-7 animate-spin" strokeWidth={1.75} />
         </span>
       )}
-      {url && <img className={styles.image} src={url} alt="" loading="lazy" draggable={false} />}
+      {url && (
+        <img
+          className="block size-full object-contain animate-in fade-in-0 duration-200"
+          src={url}
+          alt=""
+          loading="lazy"
+          draggable={false}
+        />
+      )}
       {media.kind === "video" && url && (
-        <span className={styles.play}>
-          <Play size={20} strokeWidth={1.75} fill="currentColor" />
+        <span className="pointer-events-none absolute inset-0 m-auto grid size-11 place-items-center rounded-full bg-black/45 text-white">
+          <Play className="size-5" strokeWidth={1.75} fill="currentColor" />
         </span>
       )}
     </button>
@@ -65,9 +78,20 @@ export function MessageMedia({ attachments }: MessageMediaProps) {
 
   return (
     <>
-      <div className={styles.grid} data-count={count}>
-        {visible.map((media) => (
-          <Attachment key={media.id} media={media} count={count} onOpen={setViewerMedia} />
+      <div
+        className={cn(
+          "grid gap-0.5 overflow-hidden rounded-[10px]",
+          count === 1 ? "w-fit max-w-[min(340px,70vw)]" : "w-[min(340px,70vw)] grid-cols-2",
+        )}
+      >
+        {visible.map((media, index) => (
+          <Attachment
+            key={media.id}
+            media={media}
+            count={count}
+            spanFull={count === 3 && index === 0}
+            onOpen={setViewerMedia}
+          />
         ))}
       </div>
       {viewerMedia && <MediaViewerModal media={viewerMedia} onClose={() => setViewerMedia(null)} />}

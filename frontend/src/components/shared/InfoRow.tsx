@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import styles from "./InfoRow.module.css";
 
 interface InfoRowProps {
   icon: LucideIcon;
@@ -9,11 +8,11 @@ interface InfoRowProps {
 
 export function InfoRow({ icon: Icon, value, label }: InfoRowProps) {
   return (
-    <div className={styles.row}>
-      <Icon size={20} strokeWidth={1.75} className={styles.rowIcon} />
-      <div className={styles.rowBody}>
-        <span className={styles.rowValue}>{value}</span>
-        <span className={styles.rowLabel}>{label}</span>
+    <div className="flex items-start gap-4 rounded-md px-2 py-2">
+      <Icon className="mt-0.5 size-5 shrink-0 text-subtle" strokeWidth={1.75} />
+      <div className="flex min-w-0 flex-col">
+        <span className="text-sm break-words whitespace-pre-wrap">{value}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
       </div>
     </div>
   );

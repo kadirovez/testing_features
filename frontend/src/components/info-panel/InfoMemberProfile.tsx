@@ -10,7 +10,6 @@ import { formatLastSeen } from "../../utils/formatTime";
 import { Avatar } from "../shared/Avatar";
 import { InfoRow } from "../shared/InfoRow";
 import { AddContactButton } from "./AddContactButton";
-import styles from "./InfoMemberProfile.module.css";
 
 interface InfoMemberProfileProps {
   userId: UUID;
@@ -36,7 +35,7 @@ export function InfoMemberProfile({ userId }: InfoMemberProfileProps) {
   }, [dispatch, userId]);
 
   if (!user) {
-    return <p className={styles.loading}>{t("common.loading")}</p>;
+    return <p className="p-6 text-center text-sm text-muted-foreground">{t("common.loading")}</p>;
   }
 
   let status: string;
@@ -46,14 +45,14 @@ export function InfoMemberProfile({ userId }: InfoMemberProfileProps) {
 
   return (
     <>
-      <div className={styles.hero}>
+      <div className="flex flex-col items-center gap-1 px-4 pt-6 pb-4 text-center">
         <Avatar name={user.display_name} seed={user.id} mediaId={user.avatar_media_id} size="xl" online={online} />
-        <h3 className={styles.name}>{user.display_name}</h3>
-        <span className={styles.status}>{status}</span>
+        <h3 className="mt-3 max-w-full truncate text-lg font-semibold">{user.display_name}</h3>
+        <span className="text-sm text-muted-foreground">{status}</span>
       </div>
-      <div className={styles.details}>
-        <div className={styles.usernameRow}>
-          <div className={styles.usernameRowMain}>
+      <div className="flex flex-col gap-1 border-t px-2 py-2">
+        <div className="flex items-center gap-2 pr-2">
+          <div className="min-w-0 flex-1">
             <InfoRow icon={AtSign} value={`@${user.username}`} label={t("info.username")} />
           </div>
           {!isSelf && <AddContactButton userId={userId} visible={isContact === false} onAdded={markContact} />}

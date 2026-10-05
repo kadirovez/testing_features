@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import type { MessageRead, UUID } from "../../api/types";
+import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useChatActions } from "../../hooks/useChatActions";
 import { visibleActions, type MessageActionContext } from "../../registries/messageActions";
-import { BottomSheet } from "../shared/BottomSheet";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { MessageActionList } from "./MessageActionList";
 import { MessageContextMenu } from "./MessageContextMenu";
 
@@ -20,9 +21,10 @@ interface MessageActionsHostProps {
   onClose: () => void;
 }
 
-/** Desktop: context menu at cursor. Mobile: bottom sheet. Same action registry for both. */
+/** Desktop: context menu at cursor. Mobile: bottom drawer. Same action registry for both. */
 export function MessageActionsHost({ chatId, target, onClose }: MessageActionsHostProps) {
   const { state } = useStore();
+  const { t } = useLocale();
   const breakpoint = useBreakpoint();
   const actions = useChatActions();
   const chat = state.chats.byId[chatId];
@@ -37,18 +39,21 @@ export function MessageActionsHost({ chatId, target, onClose }: MessageActionsHo
       : null;
   const items = ctx ? visibleActions(ctx) : [];
 
-  const list = ctx && <MessageActionList items={items} ctx={ctx} onDone={onClose} />;
-
   if (breakpoint === "mobile") {
     return (
-      <BottomSheet open={Boolean(target)} onClose={onClose}>
-        {list}
-      </BottomSheet>
+      <Drawer open={Boolean(target)} onOpenChange={(open) => !open && onClose()}>
+        <DrawerContent aria-describedby={undefined}>
+          <DrawerTitle className="sr-only">{t("message.actions")}</DrawerTitle>
+          <div className="flex flex-col p-2 pb-4">
+            {ctx && <MessageActionList items={items} ctx={ctx} onDone={onClose} variant="sheet" />}
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
   return (
     <MessageContextMenu open={Boolean(target)} x={shown?.x ?? 0} y={shown?.y ?? 0} onClose={onClose}>
-      {list}
+      {ctx && <MessageActionList items={items} ctx={ctx} onDone={onClose} />}
     </MessageContextMenu>
   );
 }

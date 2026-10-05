@@ -1,6 +1,5 @@
 import { useLocale } from "../../context/LocaleContext";
 import { dayLabel } from "../../utils/formatTime";
-import styles from "./DayDivider.module.css";
 
 interface DayDividerProps {
   date: string;
@@ -12,8 +11,8 @@ export function DayDivider({ date }: DayDividerProps) {
   const text = label.kind === "today" ? t("chat.today") : label.kind === "yesterday" ? t("chat.yesterday") : label.text;
 
   return (
-    <div className={styles.divider}>
-      <span className={styles.pill}>{text}</span>
+    <div className="sticky top-2 z-[1] my-3 flex justify-center">
+      <span className="rounded-full bg-black/30 px-3 py-0.5 text-xs font-medium text-white backdrop-blur-sm">{text}</span>
     </div>
   );
 }

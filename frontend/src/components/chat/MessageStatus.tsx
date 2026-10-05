@@ -1,5 +1,6 @@
 import { Check, CheckCheck } from "lucide-react";
 import type { DeliveryStatus } from "../../api/types";
+import { cn } from "@/lib/utils";
 
 interface MessageStatusProps {
   status: DeliveryStatus;
@@ -11,10 +12,8 @@ export function MessageStatus({ status, className }: MessageStatusProps) {
   const Icon = status === "sent" ? Check : CheckCheck;
   return (
     <Icon
-      size={16}
       strokeWidth={2}
-      className={className}
-      style={{ opacity: status === "read" ? 1 : 0.6, flexShrink: 0 }}
+      className={cn("size-4 shrink-0", status === "read" ? "opacity-100" : "opacity-60", className)}
       aria-label={status}
     />
   );

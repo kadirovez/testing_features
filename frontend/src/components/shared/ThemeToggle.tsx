@@ -1,21 +1,20 @@
 import { Moon } from "lucide-react";
 import { useLocale } from "../../context/LocaleContext";
 import { useTheme } from "../../context/ThemeContext";
-import { cx } from "../../utils/cx";
-import styles from "./ThemeToggle.module.css";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const { t } = useLocale();
-  const isDark = theme === "dark";
 
   return (
-    <button type="button" role="switch" aria-checked={isDark} className={styles.row} onClick={toggleTheme}>
-      <Moon size={20} strokeWidth={1.75} className={styles.icon} />
-      <span className={styles.label}>{t("settings.darkTheme")}</span>
-      <span className={cx(styles.track, isDark && styles.on)}>
-        <span className={styles.thumb} />
-      </span>
-    </button>
+    <div className="flex items-center gap-3">
+      <Moon className="size-5 shrink-0 text-subtle" strokeWidth={1.75} aria-hidden />
+      <Label htmlFor="settings-theme" className="flex-1 cursor-pointer text-sm font-medium text-foreground">
+        {t("settings.darkTheme")}
+      </Label>
+      <Switch id="settings-theme" checked={theme === "dark"} onCheckedChange={toggleTheme} />
+    </div>
   );
 }

@@ -1,13 +1,16 @@
 import { ImageUp, Loader2 } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { mediaApi } from "../../../api/media";
-import { WALLPAPER_PRESETS, type WallpaperPresetId } from "../../../chatWallpaper/presets";
+import {
+  isNeutralWallpaperPreset,
+  WALLPAPER_PRESETS,
+  type WallpaperPresetId,
+} from "../../../chatWallpaper/presets";
 import { useChatAppearance } from "../../../context/ChatAppearanceContext";
 import { useLocale } from "../../../context/LocaleContext";
 import { useAppearanceThemeSave } from "../../../hooks/useAppearanceThemeSave";
 import { useMediaUrl } from "../../../hooks/useMediaUrl";
-import { cx } from "../../../utils/cx";
-import styles from "./ChatWallpaperPicker.module.css";
+import { cn } from "@/lib/utils";
 
 export function ChatWallpaperPicker() {
   const { t } = useLocale();
@@ -43,15 +46,18 @@ export function ChatWallpaperPicker() {
   const isPresetActive = (id: WallpaperPresetId) => chatWallpaper.kind === "preset" && chatWallpaper.presetId === id;
   const customActive = chatWallpaper.kind === "custom";
 
+  const tile =
+    "relative aspect-[3/4] overflow-hidden rounded-md border bg-chat transition-[box-shadow,border-color] duration-150 outline-none hover:border-ring/50 focus-visible:ring-2 focus-visible:ring-ring/50";
+
   return (
-    <div className={styles.block}>
-      <p className={styles.label}>{t("settings.wallpaper.title")}</p>
-      <div className={styles.grid}>
+    <div>
+      <p className="mb-2 text-sm font-medium">{t("settings.wallpaper.title")}</p>
+      <div className="grid grid-cols-4 gap-2">
         {WALLPAPER_PRESETS.map((preset) => (
           <button
             key={preset.id}
             type="button"
-            className={cx(styles.tile, isPresetActive(preset.id) && styles.active)}
+            className={cn(tile, isPresetActive(preset.id) && "border-primary ring-2 ring-primary/40")}
             aria-label={t(preset.labelKey)}
             aria-pressed={isPresetActive(preset.id)}
             onClick={() => {
@@ -62,35 +68,52 @@ export function ChatWallpaperPicker() {
               });
             }}
           >
-            <span
-              className={styles.preview}
-              style={{
-                backgroundImage: `url(${preset.src})`,
-                backgroundSize: preset.tiled ? preset.tileSize : "cover",
-              }}
-            />
+            {isNeutralWallpaperPreset(preset) ? (
+              <span className="absolute inset-0 bg-chat" aria-hidden />
+            ) : (
+              <span
+                className="absolute inset-0 opacity-70 dark:opacity-40 dark:[filter:brightness(1.65)_contrast(1.12)]"
+                style={{
+                  backgroundImage: `url(${preset.src})`,
+                  backgroundSize: preset.tiled ? preset.tileSize : "cover",
+                  backgroundRepeat: preset.tiled ? "repeat" : "no-repeat",
+                }}
+              />
+            )}
           </button>
         ))}
         <button
           type="button"
-          className={cx(styles.tile, styles.upload, customActive && styles.active)}
+          className={cn(
+            tile,
+            "flex flex-col items-center justify-center gap-1 bg-muted text-muted-foreground",
+            customActive && "border-primary ring-2 ring-primary/40",
+          )}
           aria-pressed={customActive}
+          aria-label={t("settings.wallpaper.custom")}
           disabled={busy}
           onClick={() => inputRef.current?.click()}
         >
           {busy ? (
-            <Loader2 size={22} strokeWidth={1.75} className={styles.spin} />
+            <Loader2 className="size-5 animate-spin" strokeWidth={1.75} />
           ) : customPreview ? (
-            <span className={styles.preview} style={{ backgroundImage: `url(${customPreview})`, backgroundSize: "cover" }} />
+            <span
+              className="absolute inset-0"
+              style={{ backgroundImage: `url(${customPreview})`, backgroundSize: "cover", backgroundPosition: "center" }}
+            />
           ) : (
             <>
-              <ImageUp size={22} strokeWidth={1.75} />
-              <span className={styles.uploadText}>{t("settings.wallpaper.custom")}</span>
+              <ImageUp className="size-5" strokeWidth={1.75} />
+              <span className="text-[11px] font-medium">{t("settings.wallpaper.custom")}</span>
             </>
           )}
         </button>
       </div>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => void onFile(e)} />
     </div>
   );

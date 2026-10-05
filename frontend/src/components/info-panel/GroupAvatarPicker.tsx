@@ -7,8 +7,13 @@ import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { Avatar } from "../shared/Avatar";
 import { AvatarCropModal } from "../shared/AvatarCropModal";
-import { Dropdown, DropdownItem } from "../shared/Dropdown";
-import styles from "./GroupAvatarPicker.module.css";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GroupAvatarPickerProps {
   chatId: UUID;
@@ -84,33 +89,47 @@ export function GroupAvatarPicker({ chatId, name, seed, mediaId }: GroupAvatarPi
 
   return (
     <>
-      <input ref={inputRef} type="file" accept="image/*" className={styles.hidden} onChange={onFile} />
-      <Dropdown
-        open={menuOpen}
-        onClose={closeMenu}
-        trigger={
+      <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFile} />
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className={styles.trigger}
+            className="group flex flex-col items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-wait"
             disabled={busy}
             aria-label={t("info.groupAvatarMenu")}
-            onClick={() => setMenuOpen((v) => !v)}
           >
-            <span className={styles.avatarWrap}>
+            <span className="relative">
               <Avatar name={name} seed={seed} mediaId={mediaId} src={preview} size="xl" previewOnClick={false} />
-              <span className={styles.overlay}>
-                {busy ? <Loader2 size={22} strokeWidth={1.75} className={styles.spin} /> : <Camera size={22} strokeWidth={1.75} />}
+              <span
+                className={cn(
+                  "absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white transition-opacity duration-150",
+                  busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100",
+                )}
+              >
+                {busy ? <Loader2 className="size-6 animate-spin" strokeWidth={1.75} /> : <Camera className="size-6" strokeWidth={1.75} />}
               </span>
             </span>
-            <span className={styles.hint}>{t("info.groupAvatar")}</span>
+            <span className="text-xs text-primary">{t("info.groupAvatar")}</span>
           </button>
-        }
-      >
-        <DropdownItem icon={<ImageUp size={18} strokeWidth={1.75} />} label={t("info.groupAvatarUpload")} onSelect={() => { closeMenu(); inputRef.current?.click(); }} />
-        {hasAvatar && (
-          <DropdownItem icon={<Trash2 size={18} strokeWidth={1.75} />} label={t("info.groupAvatarDelete")} danger onSelect={() => void onDelete()} />
-        )}
-      </Dropdown>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center">
+          <DropdownMenuItem
+            onSelect={() => {
+              closeMenu();
+              inputRef.current?.click();
+            }}
+          >
+            <ImageUp strokeWidth={1.75} />
+            {t("info.groupAvatarUpload")}
+          </DropdownMenuItem>
+          {hasAvatar && (
+            <DropdownMenuItem variant="destructive" onSelect={() => void onDelete()}>
+              <Trash2 strokeWidth={1.75} />
+              {t("info.groupAvatarDelete")}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
       {cropSrc && (
         <AvatarCropModal imageSrc={cropSrc} onCancel={onCropCancel} onConfirm={(file) => void onCropConfirm(file)} />
       )}

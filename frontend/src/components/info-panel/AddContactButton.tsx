@@ -5,8 +5,7 @@ import { Check, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
-import { cx } from "../../utils/cx";
-import styles from "./AddContactButton.module.css";
+import { cn } from "@/lib/utils";
 
 const SUCCESS_HOLD_MS = 420;
 const EXIT_MS = 220;
@@ -83,25 +82,39 @@ export function AddContactButton({ userId, visible, onAdded }: AddContactButtonP
   const label =
     phase === "success" || phase === "exit" ? t("info.contactAdded") : t("info.addContact");
 
+  const checked = phase === "success" || phase === "exit";
+
   return (
     <button
       type="button"
-      className={cx(
-        styles.button,
-        phase === "success" && styles.success,
-        phase === "exit" && styles.exit,
-        phase === "pending" && styles.pending,
+      className={cn(
+        "relative size-10 shrink-0 rounded-full text-primary transition-[opacity,transform,background-color] duration-150 hover:enabled:bg-accent active:enabled:scale-95 disabled:cursor-default",
+        phase === "pending" && "opacity-55",
+        checked && "text-online",
+        phase === "exit" && "pointer-events-none scale-75 opacity-0",
       )}
       aria-label={label}
       title={label}
       disabled={phase !== "plus"}
       onClick={onClick}
     >
-      <span className={cx(styles.icon, styles.plus)} aria-hidden>
-        <Plus size={18} strokeWidth={2} />
+      <span
+        className={cn(
+          "absolute inset-0 grid place-items-center transition-[opacity,transform] duration-200",
+          checked ? "scale-50 rotate-45 opacity-0" : "scale-100 opacity-100",
+        )}
+        aria-hidden
+      >
+        <Plus className="size-[18px]" strokeWidth={2} />
       </span>
-      <span className={cx(styles.icon, styles.check)} aria-hidden>
-        <Check size={18} strokeWidth={2.25} />
+      <span
+        className={cn(
+          "absolute inset-0 grid place-items-center transition-[opacity,transform] duration-200",
+          checked ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-45 opacity-0",
+        )}
+        aria-hidden
+      >
+        <Check className="size-[18px]" strokeWidth={2.25} />
       </span>
     </button>
   );

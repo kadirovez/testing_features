@@ -1,10 +1,7 @@
 import { X } from "lucide-react";
-import { useRef } from "react";
-import { createPortal } from "react-dom";
 import { useLocale } from "../../context/LocaleContext";
-import { useDismiss } from "../../hooks/useDismiss";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { IconButton } from "./IconButton";
-import styles from "./AvatarPreviewModal.module.css";
 
 interface AvatarPreviewModalProps {
   imageUrl: string;
@@ -13,18 +10,24 @@ interface AvatarPreviewModalProps {
 
 export function AvatarPreviewModal({ imageUrl, onClose }: AvatarPreviewModalProps) {
   const { t } = useLocale();
-  const ref = useRef<HTMLDivElement>(null);
-  useDismiss(ref, true, onClose);
 
-  return createPortal(
-    <div className={styles.backdrop} role="dialog" aria-modal aria-label={t("avatar.previewLabel")}>
-      <div ref={ref} className={styles.dialog}>
-        <IconButton label={t("common.close")} className={styles.close} onClick={onClose}>
-          <X size={20} strokeWidth={1.75} />
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        showClose={false}
+        aria-describedby={undefined}
+        className="w-auto max-w-[min(92vw,640px)] overflow-visible border-0 bg-transparent p-0 shadow-none"
+      >
+        <DialogTitle className="sr-only">{t("avatar.previewLabel")}</DialogTitle>
+        <IconButton
+          label={t("common.close")}
+          className="absolute top-2 right-2 z-[1] bg-black/50 text-white hover:bg-black/65 hover:text-white"
+          onClick={onClose}
+        >
+          <X strokeWidth={1.75} />
         </IconButton>
-        <img className={styles.image} src={imageUrl} alt="" draggable={false} />
-      </div>
-    </div>,
-    document.body,
+        <img className="block max-h-[86dvh] max-w-full rounded-xl object-contain" src={imageUrl} alt="" draggable={false} />
+      </DialogContent>
+    </Dialog>
   );
 }

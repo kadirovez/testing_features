@@ -4,10 +4,10 @@ import { ApiError } from "../../api/client";
 import type { UUID } from "../../api/types";
 import { useLocale } from "../../context/LocaleContext";
 import { useChatActions } from "../../hooks/useChatActions";
+import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MessageContextMenu } from "../chat/MessageContextMenu";
-import { DropdownItem } from "../shared/Dropdown";
 import { Modal } from "../shared/Modal";
-import confirmStyles from "../sidebar-views/ContactProfileView.module.css";
 
 interface ChatListContextMenuProps {
   chatId: UUID | null;
@@ -54,33 +54,37 @@ export function ChatListContextMenu({ chatId, x, y, onClose }: ChatListContextMe
   return (
     <>
       <MessageContextMenu open={Boolean(chatId) && !confirmOpen} x={x} y={y} onClose={onClose}>
-        <DropdownItem
-          icon={<Trash2 size={18} strokeWidth={1.75} />}
-          label={t("chats.deleteChat")}
-          danger
+        <DropdownMenuItem
+          variant="destructive"
           onSelect={() => {
             if (chatId) setTargetChatId(chatId);
             setConfirmOpen(true);
             onClose();
           }}
-        />
+        >
+          <Trash2 strokeWidth={1.75} />
+          {t("chats.deleteChat")}
+        </DropdownMenuItem>
       </MessageContextMenu>
       <Modal
         open={confirmOpen && Boolean(targetChatId)}
         title={t("chats.deleteConfirmTitle")}
         onClose={() => !busy && setConfirmOpen(false)}
+        className="max-w-sm"
       >
-        <div className={confirmStyles.confirmBody}>
-          <p className={confirmStyles.confirmText}>{t("chats.deleteConfirmBody")}</p>
-          {error && <p className={confirmStyles.error}>{error}</p>}
-          <div className={confirmStyles.confirmActions}>
-            <button type="button" className={confirmStyles.confirmCancel} disabled={busy} onClick={() => setConfirmOpen(false)}>
-              {t("common.cancel")}
-            </button>
-            <button type="button" className={confirmStyles.confirmOk} disabled={busy} onClick={() => void onConfirm()}>
-              {t("chats.deleteChat")}
-            </button>
-          </div>
+        <p className="text-sm text-muted-foreground">{t("chats.deleteConfirmBody")}</p>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="outline" disabled={busy} onClick={() => setConfirmOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="destructive" disabled={busy} onClick={() => void onConfirm()}>
+            {t("chats.deleteChat")}
+          </Button>
         </div>
       </Modal>
     </>

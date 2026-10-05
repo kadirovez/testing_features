@@ -4,11 +4,11 @@ import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { useChatMeta } from "../../hooks/useChatMeta";
 import type { TranslationKey } from "../../i18n";
-import { cx } from "../../utils/cx";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { formatListTime } from "../../utils/formatTime";
 import { MessageStatus } from "../chat/MessageStatus";
 import { Avatar } from "../shared/Avatar";
-import styles from "./ChatListItem.module.css";
 
 interface ChatListItemProps {
   chatId: UUID;
@@ -41,34 +41,69 @@ export function ChatListItem({ chatId, active, onSelect, onContextMenu }: ChatLi
         ? t("chats.you")
         : state.users.byId[last.sender_id]?.username
       : null;
+  const unread = chat.unread_count > 0;
 
   return (
     <button
       type="button"
-      role="listitem"
-      className={cx(styles.item, active && styles.active)}
+      aria-current={active || undefined}
+      className={cn(
+        "group flex h-16 w-full items-center gap-3 rounded-md px-2 text-left transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+      )}
       onClick={onSelect}
       onContextMenu={onContextMenu}
     >
-      <Avatar name={meta.title} seed={meta.avatarSeed} mediaId={meta.avatarMediaId} size="lg" online={meta.online} />
-      <span className={styles.body}>
-        <span className={styles.row}>
-          <span className={styles.title}>{meta.title}</span>
-          {isOwn && last && <MessageStatus status={state.messages.status[last.id] ?? "sent"} className={styles.status} />}
-          <time className={styles.time}>{formatListTime(last?.created_at ?? chat.last_message_at, locale)}</time>
+      <Avatar
+        name={meta.title}
+        seed={meta.avatarSeed}
+        mediaId={meta.avatarMediaId}
+        size="lg"
+        online={meta.online}
+      />
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className={cn("min-w-0 flex-1 truncate text-sm", unread ? "font-semibold" : "font-medium")}>
+            {meta.title}
+          </span>
+          {isOwn && last && (
+            <MessageStatus
+              status={state.messages.status[last.id] ?? "sent"}
+              className="text-muted-foreground"
+            />
+          )}
+          <time
+            className={cn(
+              "shrink-0 text-xs tabular-nums",
+              unread ? "font-medium text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {formatListTime(last?.created_at ?? chat.last_message_at, locale)}
+          </time>
         </span>
-        <span className={styles.row}>
-          <span className={cx(styles.preview, meta.isTyping && styles.typing)}>
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate text-sm",
+              meta.isTyping ? "text-primary" : "text-muted-foreground",
+            )}
+          >
             {meta.isTyping ? (
               t("chat.typing")
             ) : (
               <>
-                {sender && <span className={styles.sender}>{sender}: </span>}
+                {sender && (
+                  <span className="font-medium text-foreground">
+                    {sender}:{" "}
+                  </span>
+                )}
                 {previewText(last, t)}
               </>
             )}
           </span>
-          {chat.unread_count > 0 && <span className={styles.badge}>{chat.unread_count}</span>}
+          {unread && (
+            <Badge>{chat.unread_count}</Badge>
+          )}
         </span>
       </span>
     </button>

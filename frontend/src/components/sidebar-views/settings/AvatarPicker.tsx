@@ -6,8 +6,13 @@ import { useLocale } from "../../../context/LocaleContext";
 import { useStore } from "../../../context/StoreContext";
 import { Avatar } from "../../shared/Avatar";
 import { AvatarCropModal } from "../../shared/AvatarCropModal";
-import { Dropdown, DropdownItem } from "../../shared/Dropdown";
-import styles from "./settings.module.css";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AvatarPicker() {
   const { state, dispatch } = useStore();
@@ -91,37 +96,47 @@ export function AvatarPicker() {
   const menuDisabled = busy || Boolean(cropSrc);
 
   return (
-    <div className={styles.avatarBlock}>
-      <Dropdown
-        open={menuOpen}
-        onClose={closeMenu}
-        align="center"
-        trigger={
+    <div className="flex flex-col items-center gap-2 px-4 pt-6 pb-5">
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className={styles.avatarMenuTrigger}
+            className="group flex flex-col items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-wait"
             aria-label={t("settings.avatarMenu")}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
             disabled={menuDisabled}
-            onClick={() => setMenuOpen((open) => !open)}
           >
-            <span className={styles.avatarButton}>
+            <span className="relative">
               <Avatar name={me.username} seed={me.id} mediaId={me.avatar_media_id} src={preview} size="xl" previewOnClick={false} />
-              <span className={styles.avatarOverlay}>
-                {busy ? <Loader2 size={28} className={styles.spin} /> : <Camera size={28} strokeWidth={1.5} />}
+              <span
+                className={cn(
+                  "absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white transition-opacity duration-150",
+                  busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100",
+                )}
+              >
+                {busy ? <Loader2 className="size-7 animate-spin" /> : <Camera className="size-7" strokeWidth={1.5} />}
               </span>
             </span>
-            <span className={styles.avatarHint}>{t("settings.avatar")}</span>
+            <span className="text-xs text-primary">{t("settings.avatar")}</span>
           </button>
-        }
-      >
-        <DropdownItem icon={<ImageUp size={18} strokeWidth={1.75} />} label={t("settings.avatarUpload")} onSelect={onUpload} />
-        {hasAvatar && (
-          <DropdownItem icon={<Trash2 size={18} strokeWidth={1.75} />} label={t("settings.avatarDelete")} danger onSelect={() => void onDelete()} />
-        )}
-      </Dropdown>
-      {error && <span className={styles.error}>{error}</span>}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center">
+          <DropdownMenuItem onSelect={onUpload}>
+            <ImageUp strokeWidth={1.75} />
+            {t("settings.avatarUpload")}
+          </DropdownMenuItem>
+          {hasAvatar && (
+            <DropdownMenuItem variant="destructive" onSelect={() => void onDelete()}>
+              <Trash2 strokeWidth={1.75} />
+              {t("settings.avatarDelete")}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {error && (
+        <span role="alert" className="text-xs text-destructive">
+          {error}
+        </span>
+      )}
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFile} />
       {cropSrc && <AvatarCropModal imageSrc={cropSrc} onConfirm={(file) => void onCropConfirm(file)} onCancel={onCropCancel} />}
     </div>

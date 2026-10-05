@@ -8,7 +8,6 @@ import { useStore } from "../../context/StoreContext";
 import { useChatActions } from "../../hooks/useChatActions";
 import { Avatar } from "../shared/Avatar";
 import { IconButton } from "../shared/IconButton";
-import styles from "./ContactsView.module.css";
 import { AddContactSearch } from "./AddContactSearch";
 import { ContactProfileView } from "./ContactProfileView";
 import { ViewHeader } from "./ViewHeader";
@@ -60,14 +59,14 @@ export function ContactsView() {
     <>
       <ViewHeader title={t("contacts.title")} />
       <AddContactSearch onContactAdded={onContactAdded} />
-      <div className={styles.list}>
-        {contacts === null && <p className={styles.empty}>{t("common.loading")}</p>}
-        {contacts?.length === 0 && <p className={styles.empty}>{t("common.empty")}</p>}
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+        {contacts === null && <p className="py-8 text-center text-sm text-muted-foreground">{t("common.loading")}</p>}
+        {contacts?.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("common.empty")}</p>}
         {contacts?.map(({ user, alias }) => (
-          <div key={user.id} className={styles.item}>
+          <div key={user.id} className="group flex items-center gap-1 rounded-lg pr-1 transition-colors duration-150 hover:bg-accent">
             <button
               type="button"
-              className={styles.itemMain}
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               onClick={() => {
                 setProfileAlias(alias);
                 setProfileUserId(user.id);
@@ -78,18 +77,19 @@ export function ContactsView() {
                 seed={user.id}
                 mediaId={user.avatar_media_id}
                 online={state.users.presence[user.id]?.online}
+                previewOnClick={false}
               />
-              <div className={styles.body}>
-                <span className={styles.name}>{alias ?? user.username}</span>
-                <span className={styles.sub}>@{user.username}</span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-medium">{alias ?? user.username}</span>
+                <span className="truncate text-xs text-muted-foreground">@{user.username}</span>
               </div>
             </button>
             <IconButton
               label={t("contacts.write")}
-              className={styles.action}
+              className="text-primary hover:bg-primary-soft hover:text-primary"
               onClick={() => void actions.openDirectWith(user.id)}
             >
-              <MessageCircle size={20} strokeWidth={1.75} />
+              <MessageCircle strokeWidth={1.75} />
             </IconButton>
           </div>
         ))}

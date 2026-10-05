@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { IconButton } from "../shared/IconButton";
-import styles from "./ViewHeader.module.css";
 
 interface ViewHeaderProps {
   title: string;
@@ -16,11 +15,11 @@ export function ViewHeader({ title, onBack }: ViewHeaderProps) {
   const goBack = onBack ?? (() => dispatch({ type: "ui/setSidebarView", view: "chats" }));
 
   return (
-    <header className={styles.header}>
+    <header className="flex h-[var(--header-h)] shrink-0 items-center gap-2 border-b px-2">
       <IconButton label={t("common.back")} onClick={goBack}>
-        <ArrowLeft size={20} strokeWidth={1.75} />
+        <ArrowLeft strokeWidth={1.75} />
       </IconButton>
-      <h2 className={styles.title}>{title}</h2>
+      <h2 className="truncate text-[15px] font-semibold">{title}</h2>
     </header>
   );
 }

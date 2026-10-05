@@ -6,10 +6,10 @@ import { usersApi } from "../../api/users";
 import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { useChatActions } from "../../hooks/useChatActions";
-import { cx } from "../../utils/cx";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "../shared/Avatar";
 import { IconButton } from "../shared/IconButton";
-import styles from "./AddContactSearch.module.css";
 
 const SEARCH_DEBOUNCE_MS = 220;
 
@@ -127,85 +127,95 @@ export function AddContactSearch({ onContactAdded }: AddContactSearchProps) {
   const needle = query.trim().replace(/^@+/, "");
   const showEmpty = active && needle.length > 0 && !searching && results.length === 0 && !selected;
 
+  const status = "py-3 text-center text-sm text-muted-foreground";
+
   return (
-    <div className={styles.root}>
-      <div className={cx(styles.morph, active && styles.morphActive)}>
-        <div className={styles.morphInner}>
-          <button
-            type="button"
-            className={cx(styles.addFace, active && styles.addFaceHidden)}
-            onClick={open}
-            tabIndex={active ? -1 : 0}
-            aria-hidden={active}
+    <div className="shrink-0 px-3 pt-3 pb-2">
+      {active ? (
+        <div className="relative animate-in fade-in-0 duration-200">
+          <Input
+            ref={inputRef}
+            className="h-10 pr-10"
+            value={query}
+            aria-label={t("contacts.searchPlaceholder")}
+            onChange={(e) => {
+              setQuery(e.target.value.replace(/^@+/, ""));
+              setSelected(null);
+              setError(null);
+            }}
+            placeholder={t("contacts.searchPlaceholder")}
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={32}
+            disabled={busy}
+          />
+          <IconButton
+            label={t("common.close")}
+            className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+            onClick={close}
+            disabled={busy}
           >
-            <UserPlus size={22} strokeWidth={1.75} aria-hidden />
-            <span>{t("contacts.add")}</span>
-          </button>
-          <div className={cx(styles.searchFace, active && styles.searchFaceVisible)} aria-hidden={!active}>
-            <input
-              ref={inputRef}
-              className={styles.input}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value.replace(/^@+/, ""));
-                setSelected(null);
-                setError(null);
-              }}
-              placeholder={t("contacts.searchPlaceholder")}
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={32}
-              disabled={!active || busy}
-              tabIndex={active ? 0 : -1}
-            />
-            <IconButton label={t("common.close")} className={styles.close} onClick={close} disabled={busy}>
-              <X size={20} strokeWidth={1.75} />
-            </IconButton>
-          </div>
+            <X className="size-4" strokeWidth={1.75} />
+          </IconButton>
         </div>
-      </div>
+      ) : (
+        <Button className="h-10 w-full" onClick={open}>
+          <UserPlus strokeWidth={1.75} aria-hidden />
+          {t("contacts.add")}
+        </Button>
+      )}
 
       {active && (
-        <div className={styles.panel}>
-          {error && <p className={styles.error}>{error}</p>}
+        <div className="mt-2 rounded-lg border bg-card animate-in fade-in-0 slide-in-from-top-1 duration-200 empty:hidden">
+          {error && (
+            <p role="alert" className="px-3 pt-3 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           {selected ? (
-            <div className={styles.profile}>
-              <button type="button" className={styles.backToResults} onClick={() => setSelected(null)}>
+            <div className="relative flex flex-col items-center gap-1 px-4 pt-10 pb-4 text-center">
+              <Button variant="ghost" size="sm" className="absolute top-2 left-2" onClick={() => setSelected(null)}>
                 {t("common.back")}
-              </button>
+              </Button>
               <Avatar name={selected.username} seed={selected.id} mediaId={selected.avatar_media_id} size="xl" />
-              <h3 className={styles.profileName}>{selected.username}</h3>
-              <p className={styles.profileHandle}>@{selected.username}</p>
-              {selected.bio && <p className={styles.profileBio}>{selected.bio}</p>}
-              <div className={styles.actions}>
-                <button type="button" className={styles.primary} disabled={busy} onClick={() => void onStartChat()}>
+              <h3 className="mt-3 max-w-full truncate text-lg font-semibold">{selected.username}</h3>
+              <p className="text-sm text-muted-foreground">@{selected.username}</p>
+              {selected.bio && <p className="mt-1 text-sm whitespace-pre-wrap">{selected.bio}</p>}
+              <div className="mt-4 flex w-full flex-col gap-2">
+                <Button disabled={busy} onClick={() => void onStartChat()}>
                   {t("contacts.startChat")}
-                </button>
-                <button type="button" className={styles.secondary} disabled={busy} onClick={() => void onAddContact()}>
+                </Button>
+                <Button variant="outline" disabled={busy} onClick={() => void onAddContact()}>
                   {t("contacts.saveContact")}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <>
-              {searching && <p className={styles.status}>{t("common.loading")}</p>}
-              {showEmpty && <p className={styles.status}>{t("contacts.userNotFound")}</p>}
+              {searching && <p className={status}>{t("common.loading")}</p>}
+              {showEmpty && <p className={status}>{t("contacts.userNotFound")}</p>}
               {results.length > 0 && (
-                <ul className={styles.results}>
+                <ul className="flex max-h-60 flex-col overflow-y-auto p-1">
                   {results.map((user) => (
                     <li key={user.id}>
                       <button
                         type="button"
-                        className={styles.resultItem}
+                        className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-accent"
                         onClick={() => {
                           setSelected(user);
                           setError(null);
                         }}
                       >
-                        <Avatar name={user.username} seed={user.id} mediaId={user.avatar_media_id} size="md" />
-                        <span className={styles.resultBody}>
-                          <span className={styles.resultName}>{user.username}</span>
-                          {user.bio && <span className={styles.resultSub}>{user.bio}</span>}
+                        <Avatar
+                          name={user.username}
+                          seed={user.id}
+                          mediaId={user.avatar_media_id}
+                          size="md"
+                          previewOnClick={false}
+                        />
+                        <span className="flex min-w-0 flex-col">
+                          <span className="truncate text-sm font-medium">{user.username}</span>
+                          {user.bio && <span className="truncate text-xs text-muted-foreground">{user.bio}</span>}
                         </span>
                       </button>
                     </li>

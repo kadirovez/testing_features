@@ -10,8 +10,7 @@ import { Avatar } from "../shared/Avatar";
 import { InfoRow } from "../shared/InfoRow";
 import { Modal } from "../shared/Modal";
 import { ViewHeader } from "./ViewHeader";
-import profileStyles from "./ContactProfileView.module.css";
-import styles from "./views.module.css";
+import { Button } from "@/components/ui/button";
 
 interface ContactProfileViewProps {
   userId: UUID;
@@ -43,7 +42,7 @@ export function ContactProfileView({ userId, alias, onBack, onRemoved }: Contact
     return (
       <>
         <ViewHeader title={t("common.loading")} onBack={onBack} />
-        <p className={styles.loading}>{t("common.loading")}</p>
+        <p className="p-6 text-center text-sm text-muted-foreground">{t("common.loading")}</p>
       </>
     );
   }
@@ -70,8 +69,8 @@ export function ContactProfileView({ userId, alias, onBack, onRemoved }: Contact
   return (
     <>
       <ViewHeader title={displayName} onBack={onBack} />
-      <div className={styles.scroll}>
-        <div className={styles.hero}>
+      <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+        <div className="flex flex-col items-center gap-1 px-4 pt-6 pb-5 text-center">
           <Avatar
             name={displayName}
             seed={user.id}
@@ -79,30 +78,37 @@ export function ContactProfileView({ userId, alias, onBack, onRemoved }: Contact
             size="xl"
             online={online}
           />
-          <h3 className={styles.heroName}>{displayName}</h3>
-          <span className={styles.heroSub}>{status}</span>
+          <h3 className="mt-3 max-w-full truncate text-lg font-semibold">{displayName}</h3>
+          <span className="text-sm text-muted-foreground">{status}</span>
         </div>
-        <div className={styles.section}>
+        <div className="flex flex-col gap-1 border-t px-2 py-2">
           <InfoRow icon={AtSign} value={`@${user.username}`} label={t("info.username")} />
           {user.bio && <InfoRow icon={Info} value={user.bio} label={t("info.bio")} />}
         </div>
-        <div className={profileStyles.footer}>
-          <button type="button" className={profileStyles.remove} onClick={() => setConfirmOpen(true)}>
+        <div className="border-t px-4 pt-4">
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:bg-destructive-soft hover:text-destructive"
+            onClick={() => setConfirmOpen(true)}
+          >
             {t("contacts.remove")}
-          </button>
+          </Button>
         </div>
       </div>
-      <Modal open={confirmOpen} title={t("contacts.removeConfirmTitle")} onClose={() => !removing && setConfirmOpen(false)}>
-        <div className={profileStyles.confirmBody}>
-          <p className={profileStyles.confirmText}>{t("contacts.removeConfirmBody")}</p>
-          <div className={profileStyles.confirmActions}>
-            <button type="button" className={profileStyles.confirmCancel} disabled={removing} onClick={() => setConfirmOpen(false)}>
-              {t("common.cancel")}
-            </button>
-            <button type="button" className={profileStyles.confirmOk} disabled={removing} onClick={() => void onConfirmRemove()}>
-              {t("contacts.remove")}
-            </button>
-          </div>
+      <Modal
+        open={confirmOpen}
+        title={t("contacts.removeConfirmTitle")}
+        onClose={() => !removing && setConfirmOpen(false)}
+        className="max-w-sm"
+      >
+        <p className="text-sm text-muted-foreground">{t("contacts.removeConfirmBody")}</p>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="outline" disabled={removing} onClick={() => setConfirmOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="destructive" disabled={removing} onClick={() => void onConfirmRemove()}>
+            {t("contacts.remove")}
+          </Button>
         </div>
       </Modal>
     </>

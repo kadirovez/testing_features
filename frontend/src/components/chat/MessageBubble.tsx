@@ -4,10 +4,9 @@ import { useLocale } from "../../context/LocaleContext";
 import { useStore } from "../../context/StoreContext";
 import { useLongPress } from "../../hooks/useLongPress";
 import { avatarColor } from "../../utils/avatarColor";
-import { cx } from "../../utils/cx";
+import { cn } from "@/lib/utils";
 import { formatClock } from "../../utils/formatTime";
 import { splitByLinks } from "../../utils/links";
-import styles from "./MessageBubble.module.css";
 import { MessageMedia } from "./MessageMedia";
 import { MessageStatus } from "./MessageStatus";
 
@@ -21,7 +20,7 @@ interface MessageBubbleProps {
   onMenu: (message: MessageRead, x: number, y: number) => void;
 }
 
-export function MessageBubble({ message, isOwn, isFirst, isLast, senderName, senderSeed, onMenu }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, isLast, senderName, senderSeed, onMenu }: MessageBubbleProps) {
   const { state } = useStore();
   const { t, locale } = useLocale();
   const longPress = useLongPress(() => onMenu(message, 0, 0), true);
@@ -33,44 +32,64 @@ export function MessageBubble({ message, isOwn, isFirst, isLast, senderName, sen
   };
 
   const hasMedia = message.attachments.length > 0;
+  const hasText = Boolean(message.content);
   const status = state.messages.status[message.id] ?? "sent";
 
   return (
     <div
-      className={cx(
-        styles.bubble,
-        isOwn ? styles.own : styles.peer,
-        isFirst && styles.first,
-        isLast && styles.last,
-        hasMedia && styles.withMedia,
+      className={cn(
+        "relative max-w-full rounded-lg text-sm leading-relaxed [overflow-wrap:anywhere] [-webkit-touch-callout:none] transition-[filter] duration-150 active:brightness-[0.97]",
+        hasMedia ? "overflow-hidden p-0.5" : "px-3 py-2",
+        isOwn
+          ? cn("bg-bubble-out text-bubble-out-foreground", isLast && "rounded-br-xs")
+          : cn("bg-bubble-in text-bubble-in-foreground", isLast && "rounded-bl-xs"),
       )}
       onContextMenu={onContextMenu}
       {...longPress}
     >
       {senderName && (
-        <span className={styles.sender} style={{ color: avatarColor(senderSeed ?? senderName) }}>
+        <span
+          className={cn("mb-0.5 block text-[13px] font-semibold", hasMedia && "px-2.5 pt-1")}
+          style={{ color: avatarColor(senderSeed ?? senderName) }}
+        >
           {senderName}
         </span>
       )}
       {hasMedia && <MessageMedia attachments={message.attachments} />}
-      {message.content && (
-        <p className={styles.text}>
-          {splitByLinks(message.content).map((part, i) =>
+      {hasText && (
+        <p className={cn("m-0 whitespace-pre-wrap", hasMedia && "mt-1 px-2.5 pb-1.5")}>
+          {splitByLinks(message.content ?? "").map((part, i) =>
             part.isLink ? (
-              <a key={i} href={part.text} target="_blank" rel="noreferrer" className={styles.link}>
+              <a
+                key={i}
+                href={part.text}
+                target="_blank"
+                rel="noreferrer"
+                className={cn("underline decoration-1 underline-offset-2", isOwn ? "text-inherit" : "text-primary")}
+              >
                 {part.text}
               </a>
             ) : (
               part.text
             ),
           )}
-          <span className={styles.spacer} aria-hidden />
+          {/* Reserves room so the floating time never overlaps the last line. */}
+          <span className={cn("inline-block", isOwn ? "w-[84px]" : "w-[64px]")} aria-hidden />
         </p>
       )}
-      <span className={styles.meta}>
+      <span
+        className={cn(
+          "absolute inline-flex items-center gap-0.5 text-[11px] tabular-nums select-none",
+          hasMedia && !hasText
+            ? "right-2 bottom-2 rounded-full bg-black/45 px-2 py-0.5 text-white"
+            : cn("right-2 bottom-1", isOwn ? "text-bubble-out-foreground/60" : "text-subtle"),
+        )}
+      >
         {message.edited_at && <span>{t("chat.edited")}</span>}
         <time dateTime={message.created_at}>{formatClock(message.created_at, locale)}</time>
-        {isOwn && <MessageStatus status={status} className={styles.check} />}
+        {isOwn && (
+          <MessageStatus status={status} className={hasMedia && !hasText ? "text-white" : "text-bubble-out-foreground/70"} />
+        )}
       </span>
     </div>
   );

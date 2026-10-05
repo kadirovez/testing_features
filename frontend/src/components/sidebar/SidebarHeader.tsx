@@ -1,6 +1,5 @@
 import { HamburgerMenu } from "./HamburgerMenu";
 import { SearchInput } from "./SearchInput";
-import styles from "./SidebarHeader.module.css";
 
 interface SidebarHeaderProps {
   query: string;
@@ -9,9 +8,9 @@ interface SidebarHeaderProps {
 
 export function SidebarHeader({ query, onQueryChange }: SidebarHeaderProps) {
   return (
-    <header className={styles.header}>
+    <header className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
       <HamburgerMenu />
-      <div className={styles.searchSlot}>
+      <div className="min-w-0 flex-1">
         <SearchInput value={query} onChange={onQueryChange} />
       </div>
     </header>

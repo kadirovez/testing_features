@@ -1,6 +1,6 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cx } from "../../utils/cx";
-import styles from "./IconButton.module.css";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
@@ -9,16 +9,19 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "ghost" | "accent";
 }
 
-export function IconButton({ label, children, active, variant = "ghost", className, ...rest }: IconButtonProps) {
-  return (
-    <button
-      type="button"
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ label, children, active, variant = "ghost", className, ...rest }, ref) => (
+    <Button
+      ref={ref}
+      variant={variant === "accent" ? "default" : "ghost"}
+      size="icon"
       aria-label={label}
       title={label}
-      className={cx(styles.button, styles[variant], active && styles.active, className)}
+      className={cn("rounded-full", active && variant === "ghost" && "bg-accent text-foreground", className)}
       {...rest}
     >
       {children}
-    </button>
-  );
-}
+    </Button>
+  ),
+);
+IconButton.displayName = "IconButton";

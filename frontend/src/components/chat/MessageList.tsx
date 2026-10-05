@@ -6,7 +6,6 @@ import { groupMessages } from "../../utils/groupMessages";
 import { DayDivider } from "./DayDivider";
 import { MessageActionsHost, type MenuTarget } from "./MessageActionsHost";
 import { MessageGroup } from "./MessageGroup";
-import styles from "./MessageList.module.css";
 
 const TOP_LOAD_THRESHOLD_PX = 240;
 const STICK_TO_BOTTOM_PX = 120;
@@ -74,10 +73,10 @@ export function MessageList({ chatId }: MessageListProps) {
   const closeMenu = useCallback(() => setMenu(null), []);
 
   return (
-    <div ref={scrollRef} className={styles.scroll} onScroll={onScroll}>
-      <div className={styles.column}>
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain" onScroll={onScroll}>
+      <div className="mx-auto flex min-h-full w-full max-w-[760px] flex-col justify-end px-2 pt-2 pb-1 md:px-4 md:pt-3 md:pb-2">
         {sections.map((section) => (
-          <section key={section.key} className={styles.day}>
+          <section key={section.key} className="flex flex-col">
             <DayDivider date={section.date} />
             {section.groups.map((group) => (
               <MessageGroup key={group.key} group={group} showSender={isGroup} onMenu={openMenu} />

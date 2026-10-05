@@ -1,12 +1,11 @@
 import { Check, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { createPortal } from "react-dom";
 import { useLocale } from "../../context/LocaleContext";
-import { useDismiss } from "../../hooks/useDismiss";
 import { cropImageToSquare, loadImage, squareAvatarFile, type CropTransform } from "../../utils/cropImageToSquare";
-import { cx } from "../../utils/cx";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { IconButton } from "./IconButton";
-import styles from "./AvatarCropModal.module.css";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -19,7 +18,6 @@ interface AvatarCropModalProps {
 
 export function AvatarCropModal({ imageSrc, onConfirm, onCancel }: AvatarCropModalProps) {
   const { t } = useLocale();
-  const rootRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [viewportSize, setViewportSize] = useState(320);
@@ -29,8 +27,6 @@ export function AvatarCropModal({ imageSrc, onConfirm, onCancel }: AvatarCropMod
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const dragStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
-
-  useDismiss(rootRef, true, onCancel);
 
   useLayoutEffect(() => {
     const el = viewportRef.current;
@@ -99,44 +95,66 @@ export function AvatarCropModal({ imageSrc, onConfirm, onCancel }: AvatarCropMod
     }
   };
 
-  return createPortal(
-    <div ref={rootRef} className={styles.backdrop} role="dialog" aria-modal aria-label={t("avatar.cropTitle")}>
-      <header className={styles.header}>
-        <IconButton label={t("common.close")} className={styles.close} onClick={onCancel}>
-          <X size={22} strokeWidth={1.75} />
-        </IconButton>
-        <h2 className={styles.title}>{t("avatar.cropTitle")}</h2>
-        <span style={{ width: 44 }} aria-hidden />
-      </header>
-      <div className={styles.stage}>
-        <div
-          ref={viewportRef}
-          className={cx(styles.viewport, dragging && styles.viewportDragging)}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        >
-          {image && <img className={styles.image} src={imageSrc} alt="" style={imageStyle} draggable={false} />}
-          <div className={styles.mask} aria-hidden />
+  return (
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent
+        showClose={false}
+        aria-describedby={undefined}
+        overlayClassName="bg-black/80"
+        className="flex w-[min(100%-2rem,420px)] max-w-none flex-col gap-0 overflow-hidden border-white/10 bg-neutral-950 p-0 text-white"
+      >
+        <header className="flex items-center gap-2 px-2 py-2">
+          <IconButton label={t("common.close")} className="text-white/80 hover:bg-white/10 hover:text-white" onClick={onCancel}>
+            <X strokeWidth={1.75} />
+          </IconButton>
+          <DialogTitle className="text-[15px] font-semibold">{t("avatar.cropTitle")}</DialogTitle>
+        </header>
+        <div className="grid place-items-center px-4 pb-4">
+          <div
+            ref={viewportRef}
+            className={cn(
+              "relative aspect-square w-[min(calc(100vw-4rem),360px)] touch-none overflow-hidden select-none",
+              dragging ? "cursor-grabbing" : "cursor-grab",
+            )}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            {image && (
+              <img
+                className="pointer-events-none absolute top-1/2 left-1/2 max-w-none will-change-transform"
+                src={imageSrc}
+                alt=""
+                style={imageStyle}
+                draggable={false}
+              />
+            )}
+            <div className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgb(0_0_0/0.55)]" aria-hidden />
+          </div>
         </div>
-      </div>
-      <footer className={styles.footer}>
-        <input
-          className={styles.zoom}
-          type="range"
-          min={MIN_ZOOM}
-          max={MAX_ZOOM}
-          step={0.01}
-          value={zoom}
-          aria-label={t("avatar.cropZoom")}
-          onChange={(e) => setZoom(Number(e.target.value))}
-        />
-        <button type="button" className={styles.confirm} disabled={busy} aria-label={t("avatar.cropConfirm")} onClick={() => void onSubmit()}>
-          <Check size={26} strokeWidth={2} />
-        </button>
-      </footer>
-    </div>,
-    document.body,
+        <footer className="flex items-center gap-4 border-t border-white/10 px-4 py-3">
+          <input
+            className="flex-1 accent-[var(--accent)]"
+            type="range"
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
+            step={0.01}
+            value={zoom}
+            aria-label={t("avatar.cropZoom")}
+            onChange={(e) => setZoom(Number(e.target.value))}
+          />
+          <Button
+            size="icon"
+            className="size-11 rounded-full"
+            disabled={busy}
+            aria-label={t("avatar.cropConfirm")}
+            onClick={() => void onSubmit()}
+          >
+            <Check className="size-5" strokeWidth={2.25} />
+          </Button>
+        </footer>
+      </DialogContent>
+    </Dialog>
   );
 }

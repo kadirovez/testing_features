@@ -9,7 +9,6 @@ import type { UUID } from "../../api/types";
 import { InfoRow } from "../shared/InfoRow";
 import { Avatar } from "../shared/Avatar";
 import { IconButton } from "../shared/IconButton";
-import styles from "./InfoPanel.module.css";
 import { AddContactButton } from "./AddContactButton";
 import { GroupAvatarPicker } from "./GroupAvatarPicker";
 import { GroupMembersList } from "./GroupMembersList";
@@ -53,25 +52,25 @@ export function InfoPanel() {
       : t("info.title");
 
   return (
-    <div className={styles.panel}>
-      <header className={styles.header}>
+    <div className="flex h-full flex-col bg-card">
+      <header className="flex h-[var(--header-h)] shrink-0 items-center gap-2 border-b px-2">
         {memberProfileId ? (
           <IconButton label={t("common.back")} onClick={() => setMemberProfileId(null)}>
-            <ChevronLeft size={20} strokeWidth={1.75} />
+            <ChevronLeft strokeWidth={1.75} />
           </IconButton>
         ) : (
           <IconButton label={t("common.close")} onClick={() => dispatch({ type: "ui/setInfoOpen", open: false })}>
-            <X size={20} strokeWidth={1.75} />
+            <X strokeWidth={1.75} />
           </IconButton>
         )}
-        <h2 className={styles.heading}>{memberTitle}</h2>
+        <h2 className="truncate text-[15px] font-semibold">{memberTitle}</h2>
       </header>
-      <div className={styles.scroll}>
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {memberProfileId ? (
           <InfoMemberProfile userId={memberProfileId} />
         ) : (
           <>
-            <div className={styles.hero}>
+            <div className="flex flex-col items-center gap-1 px-4 pt-6 pb-4 text-center">
               {meta.chat.type === "group" ? (
                 <GroupAvatarPicker
                   chatId={meta.chat.id}
@@ -88,13 +87,13 @@ export function InfoPanel() {
                   online={meta.online}
                 />
               )}
-              <h3 className={styles.name}>{meta.title}</h3>
-              <span className={styles.status}>{meta.subtitle}</span>
+              <h3 className="mt-3 max-w-full truncate text-lg font-semibold">{meta.title}</h3>
+              <span className="text-sm text-muted-foreground">{meta.subtitle}</span>
             </div>
-            <div className={styles.details}>
+            <div className="flex flex-col gap-1 border-t px-2 py-2 empty:hidden">
               {meta.peer && (
-                <div className={styles.usernameRow}>
-                  <div className={styles.usernameRowMain}>
+                <div className="flex items-center gap-2 pr-2">
+                  <div className="min-w-0 flex-1">
                     <InfoRow icon={AtSign} value={`@${meta.peer.username}`} label={t("info.username")} />
                   </div>
                   <AddContactButton userId={meta.peer.id} visible={isContact === false} onAdded={markContact} />
